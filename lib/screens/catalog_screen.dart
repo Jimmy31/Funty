@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../models/exercise.dart';
 import '../models/school_grade.dart';
 import '../models/subject.dart';
 import '../state/catalog_store.dart';
@@ -41,6 +42,21 @@ class _CatalogScreenState extends State<CatalogScreen> {
     } else {
       context.pop();
     }
+  }
+
+  Future<void> _openSettings(BuildContext context, Exercise exercise) async {
+    final result = await showDialog<_ExerciseSettingsResult>(
+      context: context,
+      builder: (context) => _ExerciseSettingsDialog(exercise: exercise),
+    );
+    if (result == null || !context.mounted) return;
+    await context.read<CatalogStore>().updateExerciseSettings(
+      exercise.id,
+      questionsPerSeries: result.questionsPerSeries,
+      bronzeThreshold: Duration(seconds: result.bronzeSeconds),
+      silverThreshold: Duration(seconds: result.silverSeconds),
+      goldThreshold: Duration(seconds: result.goldSeconds),
+    );
   }
 
   @override
@@ -87,12 +103,25 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 // (cf. PRD 6.3, ajout et retrait symétriques) : pas de onTap
                 // sur la carte en plus, qui se déclencherait en double avec
                 // le Switch et annulerait visuellement le changement.
-                trailing: Switch(
-                  value: store.isActive(widget.profileId, exercise.id),
-                  onChanged: (_) => store.toggleActive(
-                    widget.profileId,
-                    exercise.id,
-                  ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Comptage n'a ni série ni palier de temps (cf. PRD
+                    // 6.2/6.7) : pas de réglage à proposer pour lui.
+                    if (!exercise.isSequentialException)
+                      IconButton(
+                        tooltip: 'Réglages',
+                        icon: const Icon(Icons.tune),
+                        onPressed: () => _openSettings(context, exercise),
+                      ),
+                    Switch(
+                      value: store.isActive(widget.profileId, exercise.id),
+                      onChanged: (_) => store.toggleActive(
+                        widget.profileId,
+                        exercise.id,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -158,6 +187,127 @@ class _FilterBar extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ExerciseSettingsResult {
+  const _ExerciseSettingsResult({
+    required this.questionsPerSeries,
+    required this.bronzeSeconds,
+    required this.silverSeconds,
+    required this.goldSeconds,
+  });
+
+  final int questionsPerSeries;
+  final int bronzeSeconds;
+  final int silverSeconds;
+  final int goldSeconds;
+}
+
+/// Réglages parentaux d'un exercice (cf. PRD 6.6/6.7) : nombre de questions
+/// par série (slider) et seuils bronze/argent/or, communs à tous les
+/// profils de l'appareil pratiquant cet exercice.
+class _ExerciseSettingsDialog extends StatefulWidget {
+  const _ExerciseSettingsDialog({required this.exercise});
+
+  final Exercise exercise;
+
+  @override
+  State<_ExerciseSettingsDialog> createState() =>
+      _ExerciseSettingsDialogState();
+}
+
+class _ExerciseSettingsDialogState extends State<_ExerciseSettingsDialog> {
+  late int _questionsPerSeries = widget.exercise.questionsPerSeries;
+  late int _bronzeSeconds = widget.exercise.bronzeThreshold.inSeconds;
+  late int _silverSeconds = widget.exercise.silverThreshold.inSeconds;
+  late int _goldSeconds = widget.exercise.goldThreshold.inSeconds;
+
+  /// Un palier n'a de sens que si or <= argent <= bronze (exigences
+  /// croissantes, cf. PRD 6.7).
+  bool get _isValid => _goldSeconds <= _silverSeconds && _silverSeconds <= _bronzeSeconds;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Réglages — ${widget.exercise.title}'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Questions par série : $_questionsPerSeries'),
+            Slider(
+              value: _questionsPerSeries.toDouble(),
+              min: 5,
+              max: 20,
+              divisions: 15,
+              label: '$_questionsPerSeries',
+              onChanged: (value) =>
+                  setState(() => _questionsPerSeries = value.round()),
+            ),
+            const SizedBox(height: 8),
+            Text('Seuil bronze : $_bronzeSeconds s'),
+            Slider(
+              value: _bronzeSeconds.toDouble(),
+              min: 1,
+              max: 15,
+              divisions: 14,
+              label: '$_bronzeSeconds s',
+              onChanged: (value) =>
+                  setState(() => _bronzeSeconds = value.round()),
+            ),
+            Text('Seuil argent : $_silverSeconds s'),
+            Slider(
+              value: _silverSeconds.toDouble(),
+              min: 1,
+              max: 15,
+              divisions: 14,
+              label: '$_silverSeconds s',
+              onChanged: (value) =>
+                  setState(() => _silverSeconds = value.round()),
+            ),
+            Text('Seuil or : $_goldSeconds s'),
+            Slider(
+              value: _goldSeconds.toDouble(),
+              min: 1,
+              max: 15,
+              divisions: 14,
+              label: '$_goldSeconds s',
+              onChanged: (value) =>
+                  setState(() => _goldSeconds = value.round()),
+            ),
+            if (!_isValid)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Le seuil or doit être ≤ argent ≤ bronze (temps de\nréponse moyen par question, cf. PRD 6.7).',
+                  style: TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          onPressed: !_isValid
+              ? null
+              : () => Navigator.of(context).pop(
+                  _ExerciseSettingsResult(
+                    questionsPerSeries: _questionsPerSeries,
+                    bronzeSeconds: _bronzeSeconds,
+                    silverSeconds: _silverSeconds,
+                    goldSeconds: _goldSeconds,
+                  ),
+                ),
+          child: const Text('Enregistrer'),
+        ),
+      ],
     );
   }
 }

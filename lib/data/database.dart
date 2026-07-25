@@ -59,14 +59,36 @@ class QuestionAttempts extends Table {
   DateTimeColumn get attemptedAt => dateTime()();
 }
 
+/// Réglages parentaux propres à un exercice (cf. PRD 6.6/6.7) : nombre de
+/// questions par série et seuils bronze/argent/or. S'appliquent à tous les
+/// profils de l'appareil pratiquant cet exercice — pas de ligne = valeurs
+/// par défaut du catalogue (cf. catalog_seed.dart).
+@DataClassName('ExerciseSettingsRow')
+class ExerciseSettings extends Table {
+  TextColumn get exerciseId => text()();
+  IntColumn get questionsPerSeries => integer()();
+  IntColumn get bronzeThresholdMs => integer()();
+  IntColumn get silverThresholdMs => integer()();
+  IntColumn get goldThresholdMs => integer()();
+
+  @override
+  Set<Column> get primaryKey => {exerciseId};
+}
+
 @DriftDatabase(
-  tables: [Profiles, Activations, Performances, QuestionAttempts],
+  tables: [
+    Profiles,
+    Activations,
+    Performances,
+    QuestionAttempts,
+    ExerciseSettings,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -74,6 +96,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 2) {
         await m.createTable(questionAttempts);
+      }
+      if (from < 3) {
+        await m.createTable(exerciseSettings);
       }
     },
   );

@@ -11,4 +11,14 @@ abstract class CatalogRepository {
   Future<Set<String>> getActiveExerciseIds(String profileId);
 
   Future<void> setActive(String profileId, String exerciseId, bool active);
+
+  /// Réglage parental propre à un exercice (cf. PRD 6.6/6.7) : s'applique à
+  /// tous les profils de l'appareil pratiquant cet exercice.
+  Future<void> updateExerciseSettings(
+    String exerciseId, {
+    required int questionsPerSeries,
+    required Duration bronzeThreshold,
+    required Duration silverThreshold,
+    required Duration goldThreshold,
+  });
 }

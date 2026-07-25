@@ -62,4 +62,31 @@ class Exercise {
   final bool randomPresentation;
 
   final List<Question> questions;
+
+  /// Applique un réglage parental (cf. PRD 6.6/6.7) par-dessus les valeurs
+  /// par défaut du catalogue.
+  Exercise copyWith({
+    int? questionsPerSeries,
+    Duration? bronzeThreshold,
+    Duration? silverThreshold,
+    Duration? goldThreshold,
+  }) {
+    return Exercise(
+      id: id,
+      subject: subject,
+      theme: theme,
+      title: title,
+      oralInstruction: oralInstruction,
+      schoolGrade: schoolGrade,
+      responseMode: responseMode,
+      interactionFormat: interactionFormat,
+      questionsPerSeries: questionsPerSeries ?? this.questionsPerSeries,
+      bronzeThreshold: bronzeThreshold ?? this.bronzeThreshold,
+      silverThreshold: silverThreshold ?? this.silverThreshold,
+      goldThreshold: goldThreshold ?? this.goldThreshold,
+      isSequentialException: isSequentialException,
+      randomPresentation: randomPresentation,
+      questions: questions,
+    );
+  }
 }

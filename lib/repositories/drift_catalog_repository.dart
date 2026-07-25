@@ -16,15 +16,35 @@ class DriftCatalogRepository implements CatalogRepository {
   final List<Exercise> _exercises;
 
   @override
-  Future<List<Exercise>> getAllExercises() async =>
-      List.unmodifiable(_exercises);
+  Future<List<Exercise>> getAllExercises() async {
+    final overrides = await _loadOverrides();
+    if (overrides.isEmpty) return List.unmodifiable(_exercises);
+    return List.unmodifiable(
+      _exercises.map((exercise) {
+        final override = overrides[exercise.id];
+        if (override == null) return exercise;
+        return exercise.copyWith(
+          questionsPerSeries: override.questionsPerSeries,
+          bronzeThreshold: Duration(milliseconds: override.bronzeThresholdMs),
+          silverThreshold: Duration(milliseconds: override.silverThresholdMs),
+          goldThreshold: Duration(milliseconds: override.goldThresholdMs),
+        );
+      }),
+    );
+  }
 
   @override
   Future<Exercise?> getExerciseById(String id) async {
-    for (final exercise in _exercises) {
+    final exercises = await getAllExercises();
+    for (final exercise in exercises) {
       if (exercise.id == id) return exercise;
     }
     return null;
+  }
+
+  Future<Map<String, ExerciseSettingsRow>> _loadOverrides() async {
+    final rows = await _db.select(_db.exerciseSettings).get();
+    return {for (final row in rows) row.exerciseId: row};
   }
 
   @override
@@ -56,5 +76,26 @@ class DriftCatalogRepository implements CatalogRepository {
           ))
           .go();
     }
+  }
+
+  @override
+  Future<void> updateExerciseSettings(
+    String exerciseId, {
+    required int questionsPerSeries,
+    required Duration bronzeThreshold,
+    required Duration silverThreshold,
+    required Duration goldThreshold,
+  }) async {
+    await _db
+        .into(_db.exerciseSettings)
+        .insertOnConflictUpdate(
+          ExerciseSettingsCompanion.insert(
+            exerciseId: exerciseId,
+            questionsPerSeries: questionsPerSeries,
+            bronzeThresholdMs: bronzeThreshold.inMilliseconds,
+            silverThresholdMs: silverThreshold.inMilliseconds,
+            goldThresholdMs: goldThreshold.inMilliseconds,
+          ),
+        );
   }
 }

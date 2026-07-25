@@ -58,4 +58,23 @@ class CatalogStore extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  /// Réglage parental d'un exercice (cf. PRD 6.6/6.7) : nombre de questions
+  /// par série et seuils bronze/argent/or, communs à tous les profils.
+  Future<void> updateExerciseSettings(
+    String exerciseId, {
+    required int questionsPerSeries,
+    required Duration bronzeThreshold,
+    required Duration silverThreshold,
+    required Duration goldThreshold,
+  }) async {
+    await _repository.updateExerciseSettings(
+      exerciseId,
+      questionsPerSeries: questionsPerSeries,
+      bronzeThreshold: bronzeThreshold,
+      silverThreshold: silverThreshold,
+      goldThreshold: goldThreshold,
+    );
+    await _loadExercises();
+  }
 }

@@ -1396,6 +1396,402 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
   }
 }
 
+class $ExerciseSettingsTable extends ExerciseSettings
+    with TableInfo<$ExerciseSettingsTable, ExerciseSettingsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExerciseSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _exerciseIdMeta = const VerificationMeta(
+    'exerciseId',
+  );
+  @override
+  late final GeneratedColumn<String> exerciseId = GeneratedColumn<String>(
+    'exercise_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _questionsPerSeriesMeta =
+      const VerificationMeta('questionsPerSeries');
+  @override
+  late final GeneratedColumn<int> questionsPerSeries = GeneratedColumn<int>(
+    'questions_per_series',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bronzeThresholdMsMeta = const VerificationMeta(
+    'bronzeThresholdMs',
+  );
+  @override
+  late final GeneratedColumn<int> bronzeThresholdMs = GeneratedColumn<int>(
+    'bronze_threshold_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _silverThresholdMsMeta = const VerificationMeta(
+    'silverThresholdMs',
+  );
+  @override
+  late final GeneratedColumn<int> silverThresholdMs = GeneratedColumn<int>(
+    'silver_threshold_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _goldThresholdMsMeta = const VerificationMeta(
+    'goldThresholdMs',
+  );
+  @override
+  late final GeneratedColumn<int> goldThresholdMs = GeneratedColumn<int>(
+    'gold_threshold_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    exerciseId,
+    questionsPerSeries,
+    bronzeThresholdMs,
+    silverThresholdMs,
+    goldThresholdMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'exercise_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExerciseSettingsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('exercise_id')) {
+      context.handle(
+        _exerciseIdMeta,
+        exerciseId.isAcceptableOrUnknown(data['exercise_id']!, _exerciseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_exerciseIdMeta);
+    }
+    if (data.containsKey('questions_per_series')) {
+      context.handle(
+        _questionsPerSeriesMeta,
+        questionsPerSeries.isAcceptableOrUnknown(
+          data['questions_per_series']!,
+          _questionsPerSeriesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_questionsPerSeriesMeta);
+    }
+    if (data.containsKey('bronze_threshold_ms')) {
+      context.handle(
+        _bronzeThresholdMsMeta,
+        bronzeThresholdMs.isAcceptableOrUnknown(
+          data['bronze_threshold_ms']!,
+          _bronzeThresholdMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_bronzeThresholdMsMeta);
+    }
+    if (data.containsKey('silver_threshold_ms')) {
+      context.handle(
+        _silverThresholdMsMeta,
+        silverThresholdMs.isAcceptableOrUnknown(
+          data['silver_threshold_ms']!,
+          _silverThresholdMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_silverThresholdMsMeta);
+    }
+    if (data.containsKey('gold_threshold_ms')) {
+      context.handle(
+        _goldThresholdMsMeta,
+        goldThresholdMs.isAcceptableOrUnknown(
+          data['gold_threshold_ms']!,
+          _goldThresholdMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_goldThresholdMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {exerciseId};
+  @override
+  ExerciseSettingsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExerciseSettingsRow(
+      exerciseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exercise_id'],
+      )!,
+      questionsPerSeries: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}questions_per_series'],
+      )!,
+      bronzeThresholdMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bronze_threshold_ms'],
+      )!,
+      silverThresholdMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}silver_threshold_ms'],
+      )!,
+      goldThresholdMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}gold_threshold_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $ExerciseSettingsTable createAlias(String alias) {
+    return $ExerciseSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class ExerciseSettingsRow extends DataClass
+    implements Insertable<ExerciseSettingsRow> {
+  final String exerciseId;
+  final int questionsPerSeries;
+  final int bronzeThresholdMs;
+  final int silverThresholdMs;
+  final int goldThresholdMs;
+  const ExerciseSettingsRow({
+    required this.exerciseId,
+    required this.questionsPerSeries,
+    required this.bronzeThresholdMs,
+    required this.silverThresholdMs,
+    required this.goldThresholdMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['exercise_id'] = Variable<String>(exerciseId);
+    map['questions_per_series'] = Variable<int>(questionsPerSeries);
+    map['bronze_threshold_ms'] = Variable<int>(bronzeThresholdMs);
+    map['silver_threshold_ms'] = Variable<int>(silverThresholdMs);
+    map['gold_threshold_ms'] = Variable<int>(goldThresholdMs);
+    return map;
+  }
+
+  ExerciseSettingsCompanion toCompanion(bool nullToAbsent) {
+    return ExerciseSettingsCompanion(
+      exerciseId: Value(exerciseId),
+      questionsPerSeries: Value(questionsPerSeries),
+      bronzeThresholdMs: Value(bronzeThresholdMs),
+      silverThresholdMs: Value(silverThresholdMs),
+      goldThresholdMs: Value(goldThresholdMs),
+    );
+  }
+
+  factory ExerciseSettingsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExerciseSettingsRow(
+      exerciseId: serializer.fromJson<String>(json['exerciseId']),
+      questionsPerSeries: serializer.fromJson<int>(json['questionsPerSeries']),
+      bronzeThresholdMs: serializer.fromJson<int>(json['bronzeThresholdMs']),
+      silverThresholdMs: serializer.fromJson<int>(json['silverThresholdMs']),
+      goldThresholdMs: serializer.fromJson<int>(json['goldThresholdMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'exerciseId': serializer.toJson<String>(exerciseId),
+      'questionsPerSeries': serializer.toJson<int>(questionsPerSeries),
+      'bronzeThresholdMs': serializer.toJson<int>(bronzeThresholdMs),
+      'silverThresholdMs': serializer.toJson<int>(silverThresholdMs),
+      'goldThresholdMs': serializer.toJson<int>(goldThresholdMs),
+    };
+  }
+
+  ExerciseSettingsRow copyWith({
+    String? exerciseId,
+    int? questionsPerSeries,
+    int? bronzeThresholdMs,
+    int? silverThresholdMs,
+    int? goldThresholdMs,
+  }) => ExerciseSettingsRow(
+    exerciseId: exerciseId ?? this.exerciseId,
+    questionsPerSeries: questionsPerSeries ?? this.questionsPerSeries,
+    bronzeThresholdMs: bronzeThresholdMs ?? this.bronzeThresholdMs,
+    silverThresholdMs: silverThresholdMs ?? this.silverThresholdMs,
+    goldThresholdMs: goldThresholdMs ?? this.goldThresholdMs,
+  );
+  ExerciseSettingsRow copyWithCompanion(ExerciseSettingsCompanion data) {
+    return ExerciseSettingsRow(
+      exerciseId: data.exerciseId.present
+          ? data.exerciseId.value
+          : this.exerciseId,
+      questionsPerSeries: data.questionsPerSeries.present
+          ? data.questionsPerSeries.value
+          : this.questionsPerSeries,
+      bronzeThresholdMs: data.bronzeThresholdMs.present
+          ? data.bronzeThresholdMs.value
+          : this.bronzeThresholdMs,
+      silverThresholdMs: data.silverThresholdMs.present
+          ? data.silverThresholdMs.value
+          : this.silverThresholdMs,
+      goldThresholdMs: data.goldThresholdMs.present
+          ? data.goldThresholdMs.value
+          : this.goldThresholdMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExerciseSettingsRow(')
+          ..write('exerciseId: $exerciseId, ')
+          ..write('questionsPerSeries: $questionsPerSeries, ')
+          ..write('bronzeThresholdMs: $bronzeThresholdMs, ')
+          ..write('silverThresholdMs: $silverThresholdMs, ')
+          ..write('goldThresholdMs: $goldThresholdMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    exerciseId,
+    questionsPerSeries,
+    bronzeThresholdMs,
+    silverThresholdMs,
+    goldThresholdMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExerciseSettingsRow &&
+          other.exerciseId == this.exerciseId &&
+          other.questionsPerSeries == this.questionsPerSeries &&
+          other.bronzeThresholdMs == this.bronzeThresholdMs &&
+          other.silverThresholdMs == this.silverThresholdMs &&
+          other.goldThresholdMs == this.goldThresholdMs);
+}
+
+class ExerciseSettingsCompanion extends UpdateCompanion<ExerciseSettingsRow> {
+  final Value<String> exerciseId;
+  final Value<int> questionsPerSeries;
+  final Value<int> bronzeThresholdMs;
+  final Value<int> silverThresholdMs;
+  final Value<int> goldThresholdMs;
+  final Value<int> rowid;
+  const ExerciseSettingsCompanion({
+    this.exerciseId = const Value.absent(),
+    this.questionsPerSeries = const Value.absent(),
+    this.bronzeThresholdMs = const Value.absent(),
+    this.silverThresholdMs = const Value.absent(),
+    this.goldThresholdMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExerciseSettingsCompanion.insert({
+    required String exerciseId,
+    required int questionsPerSeries,
+    required int bronzeThresholdMs,
+    required int silverThresholdMs,
+    required int goldThresholdMs,
+    this.rowid = const Value.absent(),
+  }) : exerciseId = Value(exerciseId),
+       questionsPerSeries = Value(questionsPerSeries),
+       bronzeThresholdMs = Value(bronzeThresholdMs),
+       silverThresholdMs = Value(silverThresholdMs),
+       goldThresholdMs = Value(goldThresholdMs);
+  static Insertable<ExerciseSettingsRow> custom({
+    Expression<String>? exerciseId,
+    Expression<int>? questionsPerSeries,
+    Expression<int>? bronzeThresholdMs,
+    Expression<int>? silverThresholdMs,
+    Expression<int>? goldThresholdMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (exerciseId != null) 'exercise_id': exerciseId,
+      if (questionsPerSeries != null)
+        'questions_per_series': questionsPerSeries,
+      if (bronzeThresholdMs != null) 'bronze_threshold_ms': bronzeThresholdMs,
+      if (silverThresholdMs != null) 'silver_threshold_ms': silverThresholdMs,
+      if (goldThresholdMs != null) 'gold_threshold_ms': goldThresholdMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExerciseSettingsCompanion copyWith({
+    Value<String>? exerciseId,
+    Value<int>? questionsPerSeries,
+    Value<int>? bronzeThresholdMs,
+    Value<int>? silverThresholdMs,
+    Value<int>? goldThresholdMs,
+    Value<int>? rowid,
+  }) {
+    return ExerciseSettingsCompanion(
+      exerciseId: exerciseId ?? this.exerciseId,
+      questionsPerSeries: questionsPerSeries ?? this.questionsPerSeries,
+      bronzeThresholdMs: bronzeThresholdMs ?? this.bronzeThresholdMs,
+      silverThresholdMs: silverThresholdMs ?? this.silverThresholdMs,
+      goldThresholdMs: goldThresholdMs ?? this.goldThresholdMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (exerciseId.present) {
+      map['exercise_id'] = Variable<String>(exerciseId.value);
+    }
+    if (questionsPerSeries.present) {
+      map['questions_per_series'] = Variable<int>(questionsPerSeries.value);
+    }
+    if (bronzeThresholdMs.present) {
+      map['bronze_threshold_ms'] = Variable<int>(bronzeThresholdMs.value);
+    }
+    if (silverThresholdMs.present) {
+      map['silver_threshold_ms'] = Variable<int>(silverThresholdMs.value);
+    }
+    if (goldThresholdMs.present) {
+      map['gold_threshold_ms'] = Variable<int>(goldThresholdMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExerciseSettingsCompanion(')
+          ..write('exerciseId: $exerciseId, ')
+          ..write('questionsPerSeries: $questionsPerSeries, ')
+          ..write('bronzeThresholdMs: $bronzeThresholdMs, ')
+          ..write('silverThresholdMs: $silverThresholdMs, ')
+          ..write('goldThresholdMs: $goldThresholdMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1403,6 +1799,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ActivationsTable activations = $ActivationsTable(this);
   late final $PerformancesTable performances = $PerformancesTable(this);
   late final $QuestionAttemptsTable questionAttempts = $QuestionAttemptsTable(
+    this,
+  );
+  late final $ExerciseSettingsTable exerciseSettings = $ExerciseSettingsTable(
     this,
   );
   @override
@@ -1414,6 +1813,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     activations,
     performances,
     questionAttempts,
+    exerciseSettings,
   ];
 }
 
@@ -2200,6 +2600,226 @@ typedef $$QuestionAttemptsTableProcessedTableManager =
       QuestionAttemptRow,
       PrefetchHooks Function()
     >;
+typedef $$ExerciseSettingsTableCreateCompanionBuilder =
+    ExerciseSettingsCompanion Function({
+      required String exerciseId,
+      required int questionsPerSeries,
+      required int bronzeThresholdMs,
+      required int silverThresholdMs,
+      required int goldThresholdMs,
+      Value<int> rowid,
+    });
+typedef $$ExerciseSettingsTableUpdateCompanionBuilder =
+    ExerciseSettingsCompanion Function({
+      Value<String> exerciseId,
+      Value<int> questionsPerSeries,
+      Value<int> bronzeThresholdMs,
+      Value<int> silverThresholdMs,
+      Value<int> goldThresholdMs,
+      Value<int> rowid,
+    });
+
+class $$ExerciseSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $ExerciseSettingsTable> {
+  $$ExerciseSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get exerciseId => $composableBuilder(
+    column: $table.exerciseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get questionsPerSeries => $composableBuilder(
+    column: $table.questionsPerSeries,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bronzeThresholdMs => $composableBuilder(
+    column: $table.bronzeThresholdMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get silverThresholdMs => $composableBuilder(
+    column: $table.silverThresholdMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get goldThresholdMs => $composableBuilder(
+    column: $table.goldThresholdMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExerciseSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExerciseSettingsTable> {
+  $$ExerciseSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get exerciseId => $composableBuilder(
+    column: $table.exerciseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get questionsPerSeries => $composableBuilder(
+    column: $table.questionsPerSeries,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bronzeThresholdMs => $composableBuilder(
+    column: $table.bronzeThresholdMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get silverThresholdMs => $composableBuilder(
+    column: $table.silverThresholdMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get goldThresholdMs => $composableBuilder(
+    column: $table.goldThresholdMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExerciseSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExerciseSettingsTable> {
+  $$ExerciseSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get exerciseId => $composableBuilder(
+    column: $table.exerciseId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get questionsPerSeries => $composableBuilder(
+    column: $table.questionsPerSeries,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get bronzeThresholdMs => $composableBuilder(
+    column: $table.bronzeThresholdMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get silverThresholdMs => $composableBuilder(
+    column: $table.silverThresholdMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get goldThresholdMs => $composableBuilder(
+    column: $table.goldThresholdMs,
+    builder: (column) => column,
+  );
+}
+
+class $$ExerciseSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExerciseSettingsTable,
+          ExerciseSettingsRow,
+          $$ExerciseSettingsTableFilterComposer,
+          $$ExerciseSettingsTableOrderingComposer,
+          $$ExerciseSettingsTableAnnotationComposer,
+          $$ExerciseSettingsTableCreateCompanionBuilder,
+          $$ExerciseSettingsTableUpdateCompanionBuilder,
+          (
+            ExerciseSettingsRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ExerciseSettingsTable,
+              ExerciseSettingsRow
+            >,
+          ),
+          ExerciseSettingsRow,
+          PrefetchHooks Function()
+        > {
+  $$ExerciseSettingsTableTableManager(
+    _$AppDatabase db,
+    $ExerciseSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExerciseSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExerciseSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExerciseSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> exerciseId = const Value.absent(),
+                Value<int> questionsPerSeries = const Value.absent(),
+                Value<int> bronzeThresholdMs = const Value.absent(),
+                Value<int> silverThresholdMs = const Value.absent(),
+                Value<int> goldThresholdMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExerciseSettingsCompanion(
+                exerciseId: exerciseId,
+                questionsPerSeries: questionsPerSeries,
+                bronzeThresholdMs: bronzeThresholdMs,
+                silverThresholdMs: silverThresholdMs,
+                goldThresholdMs: goldThresholdMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String exerciseId,
+                required int questionsPerSeries,
+                required int bronzeThresholdMs,
+                required int silverThresholdMs,
+                required int goldThresholdMs,
+                Value<int> rowid = const Value.absent(),
+              }) => ExerciseSettingsCompanion.insert(
+                exerciseId: exerciseId,
+                questionsPerSeries: questionsPerSeries,
+                bronzeThresholdMs: bronzeThresholdMs,
+                silverThresholdMs: silverThresholdMs,
+                goldThresholdMs: goldThresholdMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExerciseSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExerciseSettingsTable,
+      ExerciseSettingsRow,
+      $$ExerciseSettingsTableFilterComposer,
+      $$ExerciseSettingsTableOrderingComposer,
+      $$ExerciseSettingsTableAnnotationComposer,
+      $$ExerciseSettingsTableCreateCompanionBuilder,
+      $$ExerciseSettingsTableUpdateCompanionBuilder,
+      (
+        ExerciseSettingsRow,
+        BaseReferences<
+          _$AppDatabase,
+          $ExerciseSettingsTable,
+          ExerciseSettingsRow
+        >,
+      ),
+      ExerciseSettingsRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2212,4 +2832,6 @@ class $AppDatabaseManager {
       $$PerformancesTableTableManager(_db, _db.performances);
   $$QuestionAttemptsTableTableManager get questionAttempts =>
       $$QuestionAttemptsTableTableManager(_db, _db.questionAttempts);
+  $$ExerciseSettingsTableTableManager get exerciseSettings =>
+      $$ExerciseSettingsTableTableManager(_db, _db.exerciseSettings);
 }
