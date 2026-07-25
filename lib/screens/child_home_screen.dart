@@ -7,6 +7,7 @@ import '../state/performance_store.dart';
 import '../state/profile_store.dart';
 import '../widgets/badge_icon.dart';
 import '../widgets/exercise_card.dart';
+import '../widgets/hold_to_confirm_button.dart';
 import '../widgets/subject_theme_group.dart';
 
 /// Vue enfant (cf. PRD 6.3) : uniquement les exercices activés par le
@@ -28,31 +29,6 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
     context.read<PerformanceStore>().ensureLoaded(widget.profileId);
   }
 
-  Future<void> _confirmLeave(BuildContext context) async {
-    // TODO(gestion-profil): remplacer par le geste "maintien 3 secondes" ou
-    // petit calcul exigé par le PRD 6.1 pour éviter un changement accidentel
-    // de profil ; une simple confirmation suffit pour ce squelette.
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Changer de profil ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Changer'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) {
-      context.go('/');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<ProfileStore>().byId(widget.profileId);
@@ -66,9 +42,12 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => _confirmLeave(context),
+        // Maintien de 3 secondes plutôt qu'un simple tap (cf. PRD 6.1) :
+        // le changement de profil doit être protégé par un geste non
+        // trivial pour un jeune enfant, pour éviter les sorties accidentelles.
+        leading: HoldToConfirmButton(
+          icon: Icons.arrow_back,
+          onConfirmed: () => context.go('/'),
         ),
         title: Text(profile?.name ?? 'Profil'),
       ),
