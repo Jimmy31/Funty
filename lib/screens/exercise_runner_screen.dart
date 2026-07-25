@@ -68,6 +68,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   String? _revealedAnswer;
   final _presentationRandom = Random();
   LetterPresentation? _presentation;
+  List<int>? _tactileOptions;
 
   // Comptage (exercice séquentiel, cf. PRD 5.1/6.2).
   static const _maxSequentialAttempts = 5;
@@ -145,6 +146,18 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       // concernées (cf. PRD 5.1/8.1) — tirée à chaque nouvelle question.
       _presentation = exercise.randomPresentation
           ? randomLetterPresentation(next.displayValue, _presentationRandom)
+          : null;
+      // Propositions QCM tirées une seule fois par question (cf. PRD 6.2) —
+      // sinon elles se régénèrent à chaque reconstruction de l'écran (ex. à
+      // chaque résultat partiel de l'écoute continue) et changent sans
+      // arrêt sous les yeux de l'enfant.
+      _tactileOptions =
+          exercise.responseMode.acceptsTactile && next.expectedAnswer != null
+          ? _TactileOptions.buildOptions(
+              int.parse(next.expectedAnswer!),
+              exercise.maxAnswerValue,
+              Random(),
+            )
           : null;
     });
     if (exercise.responseMode.acceptsVocal && next.expectedSpokenWord != null) {
@@ -509,11 +522,10 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
                 ),
             ],
             if (exercise.responseMode.acceptsTactile &&
-                question.expectedAnswer != null) ...[
+                _tactileOptions != null) ...[
               const SizedBox(height: 16),
               _TactileOptions(
-                question: question,
-                maxAnswerValue: exercise.maxAnswerValue,
+                options: _tactileOptions!,
                 onAnswer: _handleTactileAnswer,
               ),
             ],
@@ -557,24 +569,18 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
 }
 
 class _TactileOptions extends StatelessWidget {
-  const _TactileOptions({
-    required this.question,
-    required this.maxAnswerValue,
-    required this.onAnswer,
-  });
+  const _TactileOptions({required this.options, required this.onAnswer});
 
-  final Question question;
-
-  /// Aucune proposition ne doit dépasser cette valeur (ex. 5/10/20 pour les
-  /// exercices Addition, cf. PRD 6.2) — `null` = pas de plafond.
-  final int? maxAnswerValue;
+  /// Liste déjà tirée (cf. [buildOptions]) — calculée une seule fois par
+  /// question par l'écran parent, pas ici. La calculer dans ce `build()`
+  /// aurait régénéré (et mélangé) les propositions à chaque reconstruction
+  /// de l'écran, ex. à chaque résultat partiel de l'écoute vocale continue
+  /// (cf. PRD 6.2), les faisant changer sans arrêt sous les yeux de l'enfant.
+  final List<int> options;
   final ValueChanged<String> onAnswer;
 
   @override
   Widget build(BuildContext context) {
-    final correct = int.tryParse(question.expectedAnswer ?? '') ?? 0;
-    final options = _buildOptions(correct, maxAnswerValue, Random());
-
     return Wrap(
       spacing: 12,
       runSpacing: 12,
@@ -593,7 +599,7 @@ class _TactileOptions extends StatelessWidget {
   /// jamais dépasser [maxValue] ni descendre sous 0 (cf. PRD 6.2). Peut
   /// renvoyer moins de 5 si l'exercice n'offre pas assez de valeurs valides
   /// à proximité (ex. correct = maxValue).
-  static List<int> _buildOptions(int correct, int? maxValue, Random random) {
+  static List<int> buildOptions(int correct, int? maxValue, Random random) {
     final nearby = <int>[];
     for (var distance = 1; nearby.length < 12 && distance <= 12; distance++) {
       for (final candidate in [correct - distance, correct + distance]) {
