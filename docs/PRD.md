@@ -1,7 +1,7 @@
 # PRD — Funty
 ## Application éducative pour enfants (3-12 ans)
 
-**Version** : 0.33 (QCM Addition bornées 5-8 propositions ; bug retour système en vue enfant corrigé)
+**Version** : 0.34 (retour au tap normal pour changer de profil, geste de maintien 3s abandonné)
 **Date** : 2026-07-25
 **Statut** : En discussion
 
@@ -125,7 +125,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - Chaque profil enfant a : prénom/pseudo, avatar, et sa **propre sélection d'exercices actifs** (cf. 6.3) et son **propre historique de performances** (cf. 6.4).
 - **Pas de réglage son on/off** : le son et les animations font partie intégrante des récompenses motivant l'enfant (cf. 6.7), ce ne sont pas des options à désactiver.
 - Aucune tranche d'âge n'est attachée au profil lui-même : l'âge n'intervient qu'en métadonnée sur les exercices (cf. 6.2).
-- Changement de profil protégé par une action simple mais non triviale pour un jeune enfant (ex. maintien de 3 secondes ou petit calcul), pour éviter les changements accidentels.
+- **Changement de profil par un simple tap sur le bouton retour (revirement)** : l'idée initiale d'une action protégée non triviale (ex. maintien de 3 secondes) a été testée puis abandonnée — jugée peu intuitive et, en pratique, peu fiable au toucher réel (le geste de maintien s'annule facilement au moindre mouvement du doigt). Un tap normal suffit ; aucune protection contre un changement de profil accidentel au MVP.
 - Accès à l'espace de curation/paramétrage (6.6) protégé séparément par le code PIN parental.
 
 ### 6.2 Bibliothèque d'exercices (catalogue)
@@ -261,7 +261,8 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **13ᵉ exercice ajouté : Addition (résultat ≤ 20)**, 3ᵉ palier de difficulté au-delà de ≤5/≤10, classe scolaire **CP** (au-delà du niveau GS des deux premiers paliers) — cf. section 5.1. Le catalogue MVP passe donc de 12 à **13 exercices**.
 - **Vocabulaire vocal 11-20 non encore validé sur appareil** : contrairement au vocabulaire 0-10 et aux lettres (validés via le parcours systématique du spike, cf. section 12), les mots "onze" à "vingt" — notamment les nombres composés "dix-sept"/"dix-huit"/"dix-neuf" — n'ont pas été soumis au même test de reconnaissance réelle. Point à vérifier en priorité si des échecs de reconnaissance apparaissent sur l'exercice Addition ≤ 20, sur le même principe que la résolution des lettres H/M/N/X en son temps.
 - **Propositions QCM des exercices Addition bornées et élargies** : 5 à 8 réponses (au lieu de 4), groupées autour de la bonne valeur, jamais au-delà du plafond ≤5/≤10/≤20 de l'exercice — cf. 6.2.
-- **Bug corrigé : le geste retour système faisait quitter l'application depuis la vue enfant.** La vue enfant est atteinte par un remplacement de route (`go`, pas d'historique en dessous) : le retour système n'avait donc rien vers quoi revenir et fermait l'app entièrement, plutôt que de ne rien faire. Puisque le PRD 6.1 exige déjà un geste non trivial (maintien de 3 secondes) pour changer de profil, le retour système est maintenant absorbé sans effet sur cet écran — cohérent avec la protection existante plutôt qu'un contournement à une pression.
+- **Bug corrigé : le geste retour système faisait quitter l'application depuis la vue enfant.** La vue enfant est atteinte par un remplacement de route (`go`, pas d'historique en dessous) : le retour système n'avait donc rien vers quoi revenir et fermait l'app entièrement, plutôt que de ne rien faire. *(Note : ce correctif absorbait initialement le retour système sans effet, pour rester cohérent avec le geste de maintien 3s alors en vigueur — cf. entrée suivante pour le revirement qui a suivi.)*
+- **Geste de maintien 3s pour changer de profil abandonné, retour à un simple tap (revirement).** Deux problèmes distincts remontés à l'usage : (1) peu intuitif — sans indice visuel, un tap normal ne fait rien et donne l'impression d'un bouton cassé ; (2) peu fiable au toucher réel — implémenté d'abord avec un reconnaisseur de tap (`onTapDown`/`onTapUp`), qui annule le geste au moindre mouvement du doigt, ce qu'un appui réel de 3 secondes déclenche presque toujours par tremblement naturel de la main (un correctif vers un reconnaisseur d'appui long a résolu ce second point isolément, mais le premier problème d'intuitivité demeurait). Décision finale : simple tap, cf. revirement en 6.1. Le retour système sur la vue enfant navigue maintenant aussi directement vers la sélection de profil (au lieu d'être absorbé sans effet), cohérent avec ce tap normal.
 
 ### 8.2 Points encore ouverts
 

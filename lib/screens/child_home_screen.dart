@@ -7,7 +7,6 @@ import '../state/performance_store.dart';
 import '../state/profile_store.dart';
 import '../widgets/badge_icon.dart';
 import '../widgets/exercise_card.dart';
-import '../widgets/hold_to_confirm_button.dart';
 import '../widgets/subject_theme_group.dart';
 
 /// Vue enfant (cf. PRD 6.3) : uniquement les exercices activés par le
@@ -42,21 +41,20 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
 
     return PopScope(
       // Cet écran est atteint via context.go (pas d'historique go_router en
-      // dessous), donc laisser le geste retour système agir par défaut
-      // ferme carrément l'application plutôt que de ne rien faire — un vrai
-      // bug, en plus de contourner la protection voulue par le PRD 6.1
-      // (seul le maintien de 3 secondes doit permettre de quitter ce profil).
-      // canPop: false absorbe le retour système sans effet, exactement
-      // comme un simple tap sur le bouton de maintien.
+      // dessous) : sans interception, le retour système n'a rien vers quoi
+      // revenir et ferme l'application entière. On le redirige donc
+      // explicitement vers la sélection de profil, pour un comportement de
+      // retour normal (cf. revirement PRD 6.1 : simple tap plutôt qu'un
+      // geste protégé, jugé peu intuitif et peu fiable au toucher réel).
       canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) context.go('/');
+      },
       child: Scaffold(
         appBar: AppBar(
-          // Maintien de 3 secondes plutôt qu'un simple tap (cf. PRD 6.1) :
-          // le changement de profil doit être protégé par un geste non
-          // trivial pour un jeune enfant, pour éviter les sorties accidentelles.
-          leading: HoldToConfirmButton(
-            icon: Icons.arrow_back,
-            onConfirmed: () => context.go('/'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go('/'),
           ),
           title: Text(profile?.name ?? 'Profil'),
         ),
