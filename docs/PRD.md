@@ -1,8 +1,8 @@
 # PRD — Funty
 ## Application éducative pour enfants (3-12 ans)
 
-**Version** : 0.31 (H/M/N/X corrigées par substitution d'homophones — 25/26 lettres OK ; seul Z reste sans solution, laissé de côté)
-**Date** : 2026-07-24
+**Version** : 0.32 (feedback bonne/mauvaise réponse défini ; 13ᵉ exercice Addition ≤ 20 ajouté)
+**Date** : 2026-07-25
 **Statut** : En discussion
 
 ---
@@ -84,6 +84,7 @@ Liste de départ concrète pour amorcer la bibliothèque :
 | Mathématiques | Nombres | Affichage d'un chiffre (0 à 9), l'enfant le prononce, l'app vérifie via reconnaissance vocale | Vocal | PS |
 | Mathématiques | Addition | Addition de 2 nombres ≤ 5 | Vocal + Tactile | GS |
 | Mathématiques | Addition | Addition de 2 nombres ≤ 10 | Vocal + Tactile | GS |
+| Mathématiques | Addition | Addition de 2 nombres ≤ 20 (3ᵉ palier, au-delà de ≤5/≤10) | Vocal + Tactile | CP |
 | Mathématiques | Soustraction | Soustraction de 2 nombres ≤ 10, le second toujours inférieur au premier (pas de résultat négatif) | Vocal + Tactile | GS |
 | Mathématiques | Formes et grandeurs | Affichage d'une forme géométrique (ex. cercle, carré, triangle), l'enfant la nomme, l'app vérifie via reconnaissance vocale | Vocal | PS |
 | Mathématiques | Comptage | Compter à voix haute de 1 à 10 : l'enfant dit les chiffres **un par un**, chacun reconnu isolément (même mécanique que l'exercice "Nombres" ci-dessus) ; en cas d'erreur, la bonne réponse est donnée à l'audio et l'exercice reprend depuis le début. **Maximum 5 tentatives par séance**, et **arrêt automatique dès que l'enfant atteint 10** (pas besoin d'épuiser les 5 tentatives). **Exercice sans questions aléatoires** : la sélection adaptative (6.5), les séries/paliers de récompense par vitesse (6.7) et la règle générale des 2 échecs (6.2) ne s'appliquent pas ici — Comptage garde sa seule règle propre décrite ci-dessus. **Score propre 1-3** selon le **meilleur point atteint sur l'ensemble de la séance** (1 = a atteint au moins 5, 2 = au moins 8, 3 = a atteint 10 ; 0 si moins de 5 sur les 5 tentatives) — cf. 6.7. | Vocal | PS |
@@ -134,7 +135,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - Pour un exercice en mode **vocal + tactile**, l'enfant choisit librement comment répondre (dire la réponse à voix haute, ou la saisir/sélectionner au tactile) ; l'app doit accepter les deux sans imposer un choix préalable — détail d'interaction à préciser en phase de maquettage (cf. 11).
 - La classe scolaire recommandée est **indicative uniquement** : elle sert de filtre de recherche pour le parent, elle ne bloque techniquement l'accès à aucun exercice.
 - La bibliothèque est commune à tous les profils de l'appareil ; ce qui varie par profil, c'est l'activation (cf. 6.3), pas le contenu lui-même.
-- Feedback immédiat (visuel + sonore) après chaque réponse, cohérent sur tous les exercices.
+- **Feedback immédiat (visuel + sonore) confirmé, sur chaque tentative** : un bref flash plein écran (vert = bonne réponse, rouge = mauvaise) accompagné d'un son court et distinct, déclenché à chaque tentative de réponse — y compris une réponse fausse rapide par ailleurs ignorée par le calcul de sélection adaptative (cf. 6.5), pour que le retour perceptif reste immédiat indépendamment de ce qui compte pour le score. Cohérent sur tous les exercices, y compris Comptage.
 - **Paramètres de récompense par exercice** : le **nombre de questions par série** et les **seuils de temps bronze/argent/or** (cf. 6.7) sont des réglages propres à chaque exercice (une addition peut avoir des seuils différents d'une lettre isolée), **pas propres à un profil** — le parent les ajuste une fois par exercice, et ce réglage s'applique alors à tous les profils de l'appareil qui pratiquent cet exercice. Une valeur par défaut raisonnable est proposée par exercice, ajustable ensuite dans l'espace parental (cf. 6.6).
 - **Révélation de la réponse après 2 échecs, avec pénalité de temps** : sur la plupart des exercices, si l'enfant se trompe 2 fois de suite sur la même question, l'application donne la bonne réponse (à l'oral, cohérent avec la consigne orale systématique) avant de passer à la question suivante — pas de blocage indéfini sur une question. Cet événement ajoute une **pénalité de 5 secondes** au temps de réponse enregistré pour cette question (cf. 6.5), pour que la difficulté se reflète dans le suivi même si le temps "brut" ne compte que jusqu'à la bonne réponse.
 - **Consigne orale systématique** : chaque exercice, quel que soit son mode de réponse, explique sa tâche à l'enfant **à l'oral** (ex. "Compte les chats et dis le nombre à voix haute"), et pas seulement par texte ou pictogramme — indispensable pour les enfants qui ne savent pas encore lire (PS notamment). C'est une métadonnée/asset obligatoire de chaque exercice, pas une option.
@@ -252,6 +253,12 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Classes scolaires des nouveaux exercices confirmées** : majuscules variante aléatoire (PS), minuscules standard et variante aléatoire (**MS**), Soustraction (GS) — cf. section 5.1.
 - **Amplitude de rotation des variantes Alphabet confirmée** : rotation libre en général, **limitée à 45° max uniquement pour les lettres à risque de confusion** (b/d/p/q, M/W) — cf. section 5.1 et 10.
 - **Pool de polices confirmé : 3 polices courantes** — Roboto, Verdana, Comic Sans MS (ou Comic Neue, équivalent libre) — choisies pour leur familiarité plutôt que des polices spécialisées, à valider visuellement sur les lettres à risque avant production — cf. section 5.1 et 11.
+
+### Décisions actées (2026-07-25)
+
+- **Feedback immédiat bonne/mauvaise réponse entièrement défini** : flash plein écran bref (vert/rouge) + son court et distinct, sur chaque tentative de réponse — y compris une réponse fausse rapide par ailleurs ignorée par le calcul de sélection adaptative (cf. 6.5). S'applique à tous les exercices, y compris Comptage — cf. 6.2.
+- **13ᵉ exercice ajouté : Addition (résultat ≤ 20)**, 3ᵉ palier de difficulté au-delà de ≤5/≤10, classe scolaire **CP** (au-delà du niveau GS des deux premiers paliers) — cf. section 5.1. Le catalogue MVP passe donc de 12 à **13 exercices**.
+- **Vocabulaire vocal 11-20 non encore validé sur appareil** : contrairement au vocabulaire 0-10 et aux lettres (validés via le parcours systématique du spike, cf. section 12), les mots "onze" à "vingt" — notamment les nombres composés "dix-sept"/"dix-huit"/"dix-neuf" — n'ont pas été soumis au même test de reconnaissance réelle. Point à vérifier en priorité si des échecs de reconnaissance apparaissent sur l'exercice Addition ≤ 20, sur le même principe que la résolution des lettres H/M/N/X en son temps.
 
 ### 8.2 Points encore ouverts
 

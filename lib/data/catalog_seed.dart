@@ -7,8 +7,12 @@ import '../models/response_mode.dart';
 import '../models/school_grade.dart';
 import '../models/subject.dart';
 
-/// Vocabulaire des chiffres, validé par le spike technique (cf.
-/// docs/PRD.md section 12).
+/// Vocabulaire des chiffres. 0-10 validés par le spike technique (cf.
+/// docs/PRD.md section 12). 11-20 (pour l'exercice Addition ≤ 20) n'ont
+/// PAS été soumis au même parcours systématique de validation sur
+/// l'appareil — à vérifier comme H/M/N/X/Z l'ont été, notamment les
+/// nombres composés ("dix-sept", "dix-huit", "dix-neuf") dont la
+/// reconnaissance en un seul mot n'est pas garantie par le modèle Vosk.
 const Map<String, String> _digitWords = {
   '0': 'zéro',
   '1': 'un',
@@ -21,6 +25,16 @@ const Map<String, String> _digitWords = {
   '8': 'huit',
   '9': 'neuf',
   '10': 'dix',
+  '11': 'onze',
+  '12': 'douze',
+  '13': 'treize',
+  '14': 'quatorze',
+  '15': 'quinze',
+  '16': 'seize',
+  '17': 'dix-sept',
+  '18': 'dix-huit',
+  '19': 'dix-neuf',
+  '20': 'vingt',
 };
 
 /// Prononciation des lettres majuscules, avec les homophones validés par le
@@ -72,7 +86,7 @@ List<Question> _letterQuestions(String exerciseId, {required bool lowercase}) {
 
 List<Question> _digitQuestions(String exerciseId) {
   return _digitWords.entries
-      .where((e) => e.key != '10') // exercice "Nombres" = 0 à 9 uniquement
+      .where((e) => int.parse(e.key) <= 9) // exercice "Nombres" = 0 à 9
       .map(
         (e) => Question(
           id: '$exerciseId-${e.key}',
@@ -165,7 +179,8 @@ List<Question> _denombrementQuestions(
   return questions;
 }
 
-/// Les 12 exercices actés dans docs/PRD.md (sections 5.1 et 8.1).
+/// Les exercices du catalogue (cf. docs/PRD.md sections 5.1 et 8.1) : les 12
+/// actés initialement, plus Addition ≤ 20 (13ᵉ, ajouté ensuite).
 List<Exercise> buildCatalogSeed() {
   const alphaMajStdId = 'ex-alphabet-majuscule-standard';
   const alphaMajAleaId = 'ex-alphabet-majuscule-aleatoire';
@@ -174,6 +189,7 @@ List<Exercise> buildCatalogSeed() {
   const nombresId = 'ex-nombres';
   const additionCinqId = 'ex-addition-5';
   const additionDixId = 'ex-addition-10';
+  const additionVingtId = 'ex-addition-20';
   const soustractionDixId = 'ex-soustraction-10';
   const formesId = 'ex-formes';
   const comptageId = 'ex-comptage';
@@ -265,6 +281,23 @@ List<Exercise> buildCatalogSeed() {
         (6, 2),
         (7, 2),
         (4, 6),
+      ]),
+    ),
+    Exercise(
+      id: additionVingtId,
+      subject: Subject.mathematiques,
+      theme: 'Addition',
+      title: 'Addition (résultat ≤ 20)',
+      oralInstruction: 'Dis ou choisis le résultat de l\'addition.',
+      schoolGrade: SchoolGrade.cp,
+      responseMode: ResponseMode.vocalEtTactile,
+      interactionFormat: InteractionFormat.qcm,
+      questions: _additionQuestions(additionVingtId, const [
+        (8, 5),
+        (9, 7),
+        (12, 6),
+        (13, 4),
+        (11, 9),
       ]),
     ),
     Exercise(

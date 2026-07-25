@@ -9,12 +9,14 @@ import '../models/question.dart';
 import '../repositories/question_stats_repository.dart';
 import '../services/adaptive_question_selector.dart';
 import '../services/end_message_bank.dart';
+import '../services/feedback_sound_service.dart';
 import '../services/letter_presentation.dart';
 import '../services/question_selector.dart';
 import '../services/reward_calculator.dart';
 import '../services/vosk_recognition_service.dart';
 import '../state/catalog_store.dart';
 import '../state/performance_store.dart';
+import '../widgets/answer_flash_overlay.dart';
 
 enum _RunnerStatus { loading, playing, listening, revealed, finished, error }
 
@@ -41,9 +43,16 @@ class ExerciseRunnerScreen extends StatefulWidget {
 
 class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   final _voskService = VoskRecognitionService();
+  final _feedbackSound = FeedbackSoundService();
   late final QuestionSelector _questionSelector;
   final _rewardCalculator = const AverageTimeRewardCalculator();
   late final QuestionStatsRepository _questionStats;
+
+  // Retour immédiat bonne/mauvaise réponse (son + flash), sur chaque
+  // tentative — y compris une réponse fausse rapide par ailleurs ignorée
+  // par le calcul de sélection adaptative (cf. PRD 6.5).
+  Color? _flashColor;
+  int _flashToken = 0;
 
   Exercise? _exercise;
   _RunnerStatus _status = _RunnerStatus.loading;
@@ -181,6 +190,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
         (spoken != null &&
             spoken.trim().toLowerCase() == question.expectedSpokenWord) ||
         (tactile != null && tactile == question.expectedAnswer);
+    _flashAndPlay(correct: correct);
 
     if (!correct) {
       setState(() => _wrongAttemptsOnCurrent++);
@@ -217,6 +227,18 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       elapsed,
     );
     _afterQuestionAnswered();
+  }
+
+  void _flashAndPlay({required bool correct}) {
+    setState(() {
+      _flashColor = correct ? Colors.green : Colors.red;
+      _flashToken++;
+    });
+    if (correct) {
+      _feedbackSound.playCorrect();
+    } else {
+      _feedbackSound.playIncorrect();
+    }
   }
 
   Duration _elapsedSinceQuestionStart() {
@@ -272,6 +294,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   Future<void> _handleSequentialAnswer(String spoken) async {
     final question = _currentQuestion!;
     final correct = spoken.trim().toLowerCase() == question.expectedSpokenWord;
+    _flashAndPlay(correct: correct);
 
     if (correct) {
       final reached = _sequentialIndex + 1;
@@ -330,6 +353,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   @override
   void dispose() {
     _voskService.dispose();
+    _feedbackSound.dispose();
     super.dispose();
   }
 
@@ -338,9 +362,16 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(_exercise?.title ?? 'Exercice')),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: _buildBody(),
+        child: Stack(
+          children: [
+            Padding(padding: const EdgeInsets.all(24), child: _buildBody()),
+            Positioned.fill(
+              child: AnswerFlashOverlay(
+                key: ValueKey(_flashToken),
+                color: _flashColor,
+              ),
+            ),
+          ],
         ),
       ),
     );
