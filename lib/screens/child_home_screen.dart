@@ -70,6 +70,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
             return ExerciseCard(
               exercise: exercise,
               trailing: BadgeIcon(level: performance?.badgeLevel ?? 0),
+              showDetails: false,
               onTap: () => context.push(
                 '/profiles/${widget.profileId}/exercise/${exercise.id}',
               ),

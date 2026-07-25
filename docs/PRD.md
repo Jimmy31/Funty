@@ -1,7 +1,7 @@
 # PRD — Funty
 ## Application éducative pour enfants (3-12 ans)
 
-**Version** : 0.34 (retour au tap normal pour changer de profil, geste de maintien 3s abandonné)
+**Version** : 0.35 (métadonnées techniques masquées côté enfant : classe scolaire, icône de mode de réponse)
 **Date** : 2026-07-25
 **Statut** : En discussion
 
@@ -148,6 +148,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - Cette logique doit se refléter dans l'interface parentale : il doit être aussi simple de **retirer** un exercice devenu trop facile que d'en **ajouter** un nouveau (actions symétriques, accessibles rapidement, pas seulement l'ajout mis en avant).
 - Un même exercice peut être activé pour plusieurs profils simultanément (le contenu est partagé ; l'activation est propre à chaque profil).
 - Côté enfant, l'application n'affiche que les exercices activés pour son profil, regroupés par matière puis par thème — aucune notion de niveau/palier imposé par l'app elle-même.
+- **Métadonnées techniques masquées côté enfant (revirement).** La classe scolaire recommandée et l'icône de mode de réponse (micro/tactile/mixte) sur chaque carte d'exercice n'apportent rien à l'enfant — la classe scolaire ne lui est pas destinée (repère parental uniquement, cf. 6.2), et l'icône de mode de réponse n'est pas comprise sans légende. Les deux restent affichées dans le catalogue parental (utiles pour filtrer/choisir), mais sont retirées de la vue enfant : seuls le titre de l'exercice et le badge de récompense y apparaissent.
 
 ### 6.4 Suivi des performances
 - Par profil, enregistrement pour chaque exercice pratiqué : score/réussite, nombre de tentatives, temps passé, date de dernière pratique.

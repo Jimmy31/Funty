@@ -11,11 +11,17 @@ class ExerciseCard extends StatelessWidget {
     required this.exercise,
     this.trailing,
     this.onTap,
+    this.showDetails = true,
   });
 
   final Exercise exercise;
   final Widget? trailing;
   final VoidCallback? onTap;
+
+  /// Icône de mode de réponse et classe scolaire : utiles au parent dans le
+  /// catalogue (curation), pas à l'enfant qui ne les comprend pas — cachées
+  /// dans la vue enfant via `showDetails: false`.
+  final bool showDetails;
 
   IconData get _responseModeIcon => switch (exercise.responseMode) {
     ResponseMode.vocal => Icons.mic,
@@ -29,9 +35,9 @@ class ExerciseCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
         onTap: onTap,
-        leading: Icon(_responseModeIcon),
+        leading: showDetails ? Icon(_responseModeIcon) : null,
         title: Text(exercise.title),
-        subtitle: Text(exercise.schoolGrade.label),
+        subtitle: showDetails ? Text(exercise.schoolGrade.label) : null,
         trailing: trailing,
       ),
     );
