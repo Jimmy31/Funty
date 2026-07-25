@@ -48,10 +48,16 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
 
   @override
   Widget build(BuildContext context) {
+    // onLongPress* plutôt que onTap* : le reconnaisseur de tap annule au
+    // moindre mouvement du doigt (quelques pixels), ce qu'un appui réel de
+    // 3 secondes déclenche presque toujours (micro-tremblement naturel de
+    // la main) — le reconnaisseur d'appui long tolère ce mouvement une
+    // fois l'appui reconnu, ce qui le rend fiable pour un maintien aussi
+    // long.
     return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) => _cancelHold(),
-      onTapCancel: _cancelHold,
+      onLongPressStart: (_) => _controller.forward(),
+      onLongPressEnd: (_) => _cancelHold(),
+      onLongPressCancel: _cancelHold,
       child: SizedBox(
         width: 44,
         height: 44,
