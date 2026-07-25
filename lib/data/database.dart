@@ -45,12 +45,38 @@ class Performances extends Table {
   Set<Column> get primaryKey => {profileId, exerciseId};
 }
 
-@DriftDatabase(tables: [Profiles, Activations, Performances])
+/// Historique des temps de réponse par question (cf. PRD 6.5) : chaque
+/// tentative résolue (bonne réponse, ou révélation après 2 échecs avec sa
+/// pénalité) devient une ligne. Alimente à la fois la sélection adaptative
+/// et les futures statistiques par question du tableau de bord (PRD 6.6).
+@DataClassName('QuestionAttemptRow')
+class QuestionAttempts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get profileId => text()();
+  TextColumn get exerciseId => text()();
+  TextColumn get questionId => text()();
+  IntColumn get responseTimeMs => integer()();
+  DateTimeColumn get attemptedAt => dateTime()();
+}
+
+@DriftDatabase(
+  tables: [Profiles, Activations, Performances, QuestionAttempts],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(questionAttempts);
+      }
+    },
+  );
 }
 
 LazyDatabase _openConnection() {

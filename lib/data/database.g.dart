@@ -975,12 +975,436 @@ class PerformancesCompanion extends UpdateCompanion<PerformanceRow> {
   }
 }
 
+class $QuestionAttemptsTable extends QuestionAttempts
+    with TableInfo<$QuestionAttemptsTable, QuestionAttemptRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QuestionAttemptsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _profileIdMeta = const VerificationMeta(
+    'profileId',
+  );
+  @override
+  late final GeneratedColumn<String> profileId = GeneratedColumn<String>(
+    'profile_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _exerciseIdMeta = const VerificationMeta(
+    'exerciseId',
+  );
+  @override
+  late final GeneratedColumn<String> exerciseId = GeneratedColumn<String>(
+    'exercise_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _questionIdMeta = const VerificationMeta(
+    'questionId',
+  );
+  @override
+  late final GeneratedColumn<String> questionId = GeneratedColumn<String>(
+    'question_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _responseTimeMsMeta = const VerificationMeta(
+    'responseTimeMs',
+  );
+  @override
+  late final GeneratedColumn<int> responseTimeMs = GeneratedColumn<int>(
+    'response_time_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _attemptedAtMeta = const VerificationMeta(
+    'attemptedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> attemptedAt = GeneratedColumn<DateTime>(
+    'attempted_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    profileId,
+    exerciseId,
+    questionId,
+    responseTimeMs,
+    attemptedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'question_attempts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QuestionAttemptRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('profile_id')) {
+      context.handle(
+        _profileIdMeta,
+        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_profileIdMeta);
+    }
+    if (data.containsKey('exercise_id')) {
+      context.handle(
+        _exerciseIdMeta,
+        exerciseId.isAcceptableOrUnknown(data['exercise_id']!, _exerciseIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_exerciseIdMeta);
+    }
+    if (data.containsKey('question_id')) {
+      context.handle(
+        _questionIdMeta,
+        questionId.isAcceptableOrUnknown(data['question_id']!, _questionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_questionIdMeta);
+    }
+    if (data.containsKey('response_time_ms')) {
+      context.handle(
+        _responseTimeMsMeta,
+        responseTimeMs.isAcceptableOrUnknown(
+          data['response_time_ms']!,
+          _responseTimeMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_responseTimeMsMeta);
+    }
+    if (data.containsKey('attempted_at')) {
+      context.handle(
+        _attemptedAtMeta,
+        attemptedAt.isAcceptableOrUnknown(
+          data['attempted_at']!,
+          _attemptedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_attemptedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  QuestionAttemptRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QuestionAttemptRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      profileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}profile_id'],
+      )!,
+      exerciseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exercise_id'],
+      )!,
+      questionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}question_id'],
+      )!,
+      responseTimeMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}response_time_ms'],
+      )!,
+      attemptedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}attempted_at'],
+      )!,
+    );
+  }
+
+  @override
+  $QuestionAttemptsTable createAlias(String alias) {
+    return $QuestionAttemptsTable(attachedDatabase, alias);
+  }
+}
+
+class QuestionAttemptRow extends DataClass
+    implements Insertable<QuestionAttemptRow> {
+  final int id;
+  final String profileId;
+  final String exerciseId;
+  final String questionId;
+  final int responseTimeMs;
+  final DateTime attemptedAt;
+  const QuestionAttemptRow({
+    required this.id,
+    required this.profileId,
+    required this.exerciseId,
+    required this.questionId,
+    required this.responseTimeMs,
+    required this.attemptedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['profile_id'] = Variable<String>(profileId);
+    map['exercise_id'] = Variable<String>(exerciseId);
+    map['question_id'] = Variable<String>(questionId);
+    map['response_time_ms'] = Variable<int>(responseTimeMs);
+    map['attempted_at'] = Variable<DateTime>(attemptedAt);
+    return map;
+  }
+
+  QuestionAttemptsCompanion toCompanion(bool nullToAbsent) {
+    return QuestionAttemptsCompanion(
+      id: Value(id),
+      profileId: Value(profileId),
+      exerciseId: Value(exerciseId),
+      questionId: Value(questionId),
+      responseTimeMs: Value(responseTimeMs),
+      attemptedAt: Value(attemptedAt),
+    );
+  }
+
+  factory QuestionAttemptRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QuestionAttemptRow(
+      id: serializer.fromJson<int>(json['id']),
+      profileId: serializer.fromJson<String>(json['profileId']),
+      exerciseId: serializer.fromJson<String>(json['exerciseId']),
+      questionId: serializer.fromJson<String>(json['questionId']),
+      responseTimeMs: serializer.fromJson<int>(json['responseTimeMs']),
+      attemptedAt: serializer.fromJson<DateTime>(json['attemptedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'profileId': serializer.toJson<String>(profileId),
+      'exerciseId': serializer.toJson<String>(exerciseId),
+      'questionId': serializer.toJson<String>(questionId),
+      'responseTimeMs': serializer.toJson<int>(responseTimeMs),
+      'attemptedAt': serializer.toJson<DateTime>(attemptedAt),
+    };
+  }
+
+  QuestionAttemptRow copyWith({
+    int? id,
+    String? profileId,
+    String? exerciseId,
+    String? questionId,
+    int? responseTimeMs,
+    DateTime? attemptedAt,
+  }) => QuestionAttemptRow(
+    id: id ?? this.id,
+    profileId: profileId ?? this.profileId,
+    exerciseId: exerciseId ?? this.exerciseId,
+    questionId: questionId ?? this.questionId,
+    responseTimeMs: responseTimeMs ?? this.responseTimeMs,
+    attemptedAt: attemptedAt ?? this.attemptedAt,
+  );
+  QuestionAttemptRow copyWithCompanion(QuestionAttemptsCompanion data) {
+    return QuestionAttemptRow(
+      id: data.id.present ? data.id.value : this.id,
+      profileId: data.profileId.present ? data.profileId.value : this.profileId,
+      exerciseId: data.exerciseId.present
+          ? data.exerciseId.value
+          : this.exerciseId,
+      questionId: data.questionId.present
+          ? data.questionId.value
+          : this.questionId,
+      responseTimeMs: data.responseTimeMs.present
+          ? data.responseTimeMs.value
+          : this.responseTimeMs,
+      attemptedAt: data.attemptedAt.present
+          ? data.attemptedAt.value
+          : this.attemptedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuestionAttemptRow(')
+          ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
+          ..write('exerciseId: $exerciseId, ')
+          ..write('questionId: $questionId, ')
+          ..write('responseTimeMs: $responseTimeMs, ')
+          ..write('attemptedAt: $attemptedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    profileId,
+    exerciseId,
+    questionId,
+    responseTimeMs,
+    attemptedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QuestionAttemptRow &&
+          other.id == this.id &&
+          other.profileId == this.profileId &&
+          other.exerciseId == this.exerciseId &&
+          other.questionId == this.questionId &&
+          other.responseTimeMs == this.responseTimeMs &&
+          other.attemptedAt == this.attemptedAt);
+}
+
+class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
+  final Value<int> id;
+  final Value<String> profileId;
+  final Value<String> exerciseId;
+  final Value<String> questionId;
+  final Value<int> responseTimeMs;
+  final Value<DateTime> attemptedAt;
+  const QuestionAttemptsCompanion({
+    this.id = const Value.absent(),
+    this.profileId = const Value.absent(),
+    this.exerciseId = const Value.absent(),
+    this.questionId = const Value.absent(),
+    this.responseTimeMs = const Value.absent(),
+    this.attemptedAt = const Value.absent(),
+  });
+  QuestionAttemptsCompanion.insert({
+    this.id = const Value.absent(),
+    required String profileId,
+    required String exerciseId,
+    required String questionId,
+    required int responseTimeMs,
+    required DateTime attemptedAt,
+  }) : profileId = Value(profileId),
+       exerciseId = Value(exerciseId),
+       questionId = Value(questionId),
+       responseTimeMs = Value(responseTimeMs),
+       attemptedAt = Value(attemptedAt);
+  static Insertable<QuestionAttemptRow> custom({
+    Expression<int>? id,
+    Expression<String>? profileId,
+    Expression<String>? exerciseId,
+    Expression<String>? questionId,
+    Expression<int>? responseTimeMs,
+    Expression<DateTime>? attemptedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (profileId != null) 'profile_id': profileId,
+      if (exerciseId != null) 'exercise_id': exerciseId,
+      if (questionId != null) 'question_id': questionId,
+      if (responseTimeMs != null) 'response_time_ms': responseTimeMs,
+      if (attemptedAt != null) 'attempted_at': attemptedAt,
+    });
+  }
+
+  QuestionAttemptsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? profileId,
+    Value<String>? exerciseId,
+    Value<String>? questionId,
+    Value<int>? responseTimeMs,
+    Value<DateTime>? attemptedAt,
+  }) {
+    return QuestionAttemptsCompanion(
+      id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
+      exerciseId: exerciseId ?? this.exerciseId,
+      questionId: questionId ?? this.questionId,
+      responseTimeMs: responseTimeMs ?? this.responseTimeMs,
+      attemptedAt: attemptedAt ?? this.attemptedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (profileId.present) {
+      map['profile_id'] = Variable<String>(profileId.value);
+    }
+    if (exerciseId.present) {
+      map['exercise_id'] = Variable<String>(exerciseId.value);
+    }
+    if (questionId.present) {
+      map['question_id'] = Variable<String>(questionId.value);
+    }
+    if (responseTimeMs.present) {
+      map['response_time_ms'] = Variable<int>(responseTimeMs.value);
+    }
+    if (attemptedAt.present) {
+      map['attempted_at'] = Variable<DateTime>(attemptedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuestionAttemptsCompanion(')
+          ..write('id: $id, ')
+          ..write('profileId: $profileId, ')
+          ..write('exerciseId: $exerciseId, ')
+          ..write('questionId: $questionId, ')
+          ..write('responseTimeMs: $responseTimeMs, ')
+          ..write('attemptedAt: $attemptedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ProfilesTable profiles = $ProfilesTable(this);
   late final $ActivationsTable activations = $ActivationsTable(this);
   late final $PerformancesTable performances = $PerformancesTable(this);
+  late final $QuestionAttemptsTable questionAttempts = $QuestionAttemptsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -989,6 +1413,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     profiles,
     activations,
     performances,
+    questionAttempts,
   ];
 }
 
@@ -1544,6 +1969,237 @@ typedef $$PerformancesTableProcessedTableManager =
       PerformanceRow,
       PrefetchHooks Function()
     >;
+typedef $$QuestionAttemptsTableCreateCompanionBuilder =
+    QuestionAttemptsCompanion Function({
+      Value<int> id,
+      required String profileId,
+      required String exerciseId,
+      required String questionId,
+      required int responseTimeMs,
+      required DateTime attemptedAt,
+    });
+typedef $$QuestionAttemptsTableUpdateCompanionBuilder =
+    QuestionAttemptsCompanion Function({
+      Value<int> id,
+      Value<String> profileId,
+      Value<String> exerciseId,
+      Value<String> questionId,
+      Value<int> responseTimeMs,
+      Value<DateTime> attemptedAt,
+    });
+
+class $$QuestionAttemptsTableFilterComposer
+    extends Composer<_$AppDatabase, $QuestionAttemptsTable> {
+  $$QuestionAttemptsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exerciseId => $composableBuilder(
+    column: $table.exerciseId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get questionId => $composableBuilder(
+    column: $table.questionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get responseTimeMs => $composableBuilder(
+    column: $table.responseTimeMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get attemptedAt => $composableBuilder(
+    column: $table.attemptedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$QuestionAttemptsTableOrderingComposer
+    extends Composer<_$AppDatabase, $QuestionAttemptsTable> {
+  $$QuestionAttemptsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get profileId => $composableBuilder(
+    column: $table.profileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exerciseId => $composableBuilder(
+    column: $table.exerciseId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get questionId => $composableBuilder(
+    column: $table.questionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get responseTimeMs => $composableBuilder(
+    column: $table.responseTimeMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get attemptedAt => $composableBuilder(
+    column: $table.attemptedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$QuestionAttemptsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QuestionAttemptsTable> {
+  $$QuestionAttemptsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get profileId =>
+      $composableBuilder(column: $table.profileId, builder: (column) => column);
+
+  GeneratedColumn<String> get exerciseId => $composableBuilder(
+    column: $table.exerciseId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get questionId => $composableBuilder(
+    column: $table.questionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get responseTimeMs => $composableBuilder(
+    column: $table.responseTimeMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get attemptedAt => $composableBuilder(
+    column: $table.attemptedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$QuestionAttemptsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QuestionAttemptsTable,
+          QuestionAttemptRow,
+          $$QuestionAttemptsTableFilterComposer,
+          $$QuestionAttemptsTableOrderingComposer,
+          $$QuestionAttemptsTableAnnotationComposer,
+          $$QuestionAttemptsTableCreateCompanionBuilder,
+          $$QuestionAttemptsTableUpdateCompanionBuilder,
+          (
+            QuestionAttemptRow,
+            BaseReferences<
+              _$AppDatabase,
+              $QuestionAttemptsTable,
+              QuestionAttemptRow
+            >,
+          ),
+          QuestionAttemptRow,
+          PrefetchHooks Function()
+        > {
+  $$QuestionAttemptsTableTableManager(
+    _$AppDatabase db,
+    $QuestionAttemptsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QuestionAttemptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$QuestionAttemptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$QuestionAttemptsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> profileId = const Value.absent(),
+                Value<String> exerciseId = const Value.absent(),
+                Value<String> questionId = const Value.absent(),
+                Value<int> responseTimeMs = const Value.absent(),
+                Value<DateTime> attemptedAt = const Value.absent(),
+              }) => QuestionAttemptsCompanion(
+                id: id,
+                profileId: profileId,
+                exerciseId: exerciseId,
+                questionId: questionId,
+                responseTimeMs: responseTimeMs,
+                attemptedAt: attemptedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String profileId,
+                required String exerciseId,
+                required String questionId,
+                required int responseTimeMs,
+                required DateTime attemptedAt,
+              }) => QuestionAttemptsCompanion.insert(
+                id: id,
+                profileId: profileId,
+                exerciseId: exerciseId,
+                questionId: questionId,
+                responseTimeMs: responseTimeMs,
+                attemptedAt: attemptedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$QuestionAttemptsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QuestionAttemptsTable,
+      QuestionAttemptRow,
+      $$QuestionAttemptsTableFilterComposer,
+      $$QuestionAttemptsTableOrderingComposer,
+      $$QuestionAttemptsTableAnnotationComposer,
+      $$QuestionAttemptsTableCreateCompanionBuilder,
+      $$QuestionAttemptsTableUpdateCompanionBuilder,
+      (
+        QuestionAttemptRow,
+        BaseReferences<
+          _$AppDatabase,
+          $QuestionAttemptsTable,
+          QuestionAttemptRow
+        >,
+      ),
+      QuestionAttemptRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1554,4 +2210,6 @@ class $AppDatabaseManager {
       $$ActivationsTableTableManager(_db, _db.activations);
   $$PerformancesTableTableManager get performances =>
       $$PerformancesTableTableManager(_db, _db.performances);
+  $$QuestionAttemptsTableTableManager get questionAttempts =>
+      $$QuestionAttemptsTableTableManager(_db, _db.questionAttempts);
 }

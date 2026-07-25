@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../models/exercise.dart';
 import '../models/question.dart';
+import '../repositories/question_stats_repository.dart';
+import '../services/adaptive_question_selector.dart';
+import '../services/end_message_bank.dart';
 import '../services/question_selector.dart';
 import '../services/reward_calculator.dart';
 import '../services/vosk_recognition_service.dart';
@@ -16,9 +19,9 @@ enum _RunnerStatus { loading, playing, listening, revealed, finished, error }
 /// (cf. PRD 6.2). Réutilise le mécanisme de reconnaissance vocale validé par
 /// le spike technique (grammaire fermée sur un mot isolé par question).
 ///
-/// Sélection adaptative (PRD 6.5) et calcul des récompenses (PRD 6.7) sont
-/// stubés ([RandomQuestionSelector], [StubRewardCalculator]) — les vrais
-/// algorithmes se branchent derrière ces interfaces sans toucher cet écran.
+/// Sélection adaptative (PRD 6.5, [AdaptiveQuestionSelector]) et calcul des
+/// récompenses (PRD 6.7, [AverageTimeRewardCalculator]) branchés derrière
+/// leurs interfaces respectives.
 class ExerciseRunnerScreen extends StatefulWidget {
   const ExerciseRunnerScreen({
     super.key,
@@ -35,8 +38,9 @@ class ExerciseRunnerScreen extends StatefulWidget {
 
 class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   final _voskService = VoskRecognitionService();
-  final _questionSelector = RandomQuestionSelector();
-  final _rewardCalculator = StubRewardCalculator();
+  late final QuestionSelector _questionSelector;
+  final _rewardCalculator = const AverageTimeRewardCalculator();
+  late final QuestionStatsRepository _questionStats;
 
   Exercise? _exercise;
   _RunnerStatus _status = _RunnerStatus.loading;
@@ -59,10 +63,13 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
 
   int? _finalBadgeLevel;
   int? _finalSequentialScore;
+  String? _endMessage;
 
   @override
   void initState() {
     super.initState();
+    _questionStats = context.read<QuestionStatsRepository>();
+    _questionSelector = AdaptiveQuestionSelector(_questionStats);
     _load();
   }
 
@@ -106,7 +113,13 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
 
   Future<void> _pickNextQuestion() async {
     final exercise = _exercise!;
-    final next = _questionSelector.selectNext(exercise.questions, _currentQuestion);
+    final next = await _questionSelector.selectNext(
+      profileId: widget.profileId,
+      exerciseId: widget.exerciseId,
+      allQuestions: exercise.questions,
+      previous: _currentQuestion,
+    );
+    if (!mounted) return;
     setState(() {
       _currentQuestion = next;
       _wrongAttemptsOnCurrent = 0;
@@ -161,9 +174,20 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
 
     if (!correct) {
       setState(() => _wrongAttemptsOnCurrent++);
-      // Révélation de la réponse après 2 échecs (cf. PRD 6.2).
+      // Révélation de la réponse après 2 échecs (cf. PRD 6.2), avec une
+      // pénalité fixe de 5s ajoutée au temps enregistré pour cette question
+      // (cf. PRD 6.5) — une réponse fausse rapide, elle, est simplement
+      // ignorée et ne modifie rien tant que ce seuil n'est pas atteint.
       if (_wrongAttemptsOnCurrent >= 2) {
         await _voskService.stop();
+        final elapsed = _elapsedSinceQuestionStart() + const Duration(seconds: 5);
+        _responseTimes.add(elapsed);
+        await _questionStats.recordAttempt(
+          widget.profileId,
+          widget.exerciseId,
+          question.id,
+          elapsed,
+        );
         setState(() {
           _status = _RunnerStatus.revealed;
           _revealedAnswer = question.expectedAnswer ?? question.expectedSpokenWord;
@@ -174,11 +198,21 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     }
 
     await _voskService.stop();
-    final elapsed = _questionStartedAt == null
+    final elapsed = _elapsedSinceQuestionStart();
+    _responseTimes.add(elapsed);
+    await _questionStats.recordAttempt(
+      widget.profileId,
+      widget.exerciseId,
+      question.id,
+      elapsed,
+    );
+    _afterQuestionAnswered();
+  }
+
+  Duration _elapsedSinceQuestionStart() {
+    return _questionStartedAt == null
         ? Duration.zero
         : DateTime.now().difference(_questionStartedAt!);
-    _responseTimes.add(elapsed);
-    _afterQuestionAnswered();
   }
 
   Future<void> _afterQuestionAnswered() async {
@@ -204,6 +238,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     if (!mounted) return;
     setState(() {
       _finalBadgeLevel = badgeLevel;
+      _endMessage = pickEndMessage(badgeLevel);
       _status = _RunnerStatus.finished;
     });
   }
@@ -277,6 +312,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     if (!mounted) return;
     setState(() {
       _finalSequentialScore = score;
+      _endMessage = pickEndMessage(score);
       _status = _RunnerStatus.finished;
     });
   }
@@ -396,14 +432,9 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     final exercise = _exercise!;
     final isSequential = exercise.isSequentialException;
     final level = isSequential ? _finalSequentialScore! : _finalBadgeLevel!;
-    // Message de fin d'exercice, toujours positif (cf. PRD 6.7). 2-3
-    // variantes texte pour ce squelette — pas encore la banque audio complète.
-    final message = switch (level) {
-      3 => 'Bravo, tu as été super rapide sur ce coup-là !',
-      2 || 1 => 'Bien joué, continue comme ça !',
-      _ =>
-        'Ce n\'est pas grave, avec un peu d\'entraînement tu vas y arriver !',
-    };
+    // Message de fin d'exercice tiré de la banque de variantes (cf. PRD
+    // 6.7) — texte pour l'instant, pas encore la banque audio complète.
+    final message = _endMessage!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

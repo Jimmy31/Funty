@@ -5,6 +5,8 @@ import 'data/database.dart';
 import 'repositories/drift_catalog_repository.dart';
 import 'repositories/drift_performance_repository.dart';
 import 'repositories/drift_profile_repository.dart';
+import 'repositories/drift_question_stats_repository.dart';
+import 'repositories/question_stats_repository.dart';
 import 'routing/app_router.dart';
 import 'state/catalog_store.dart';
 import 'state/performance_store.dart';
@@ -28,6 +30,9 @@ class FuntyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) =>
               PerformanceStore(DriftPerformanceRepository(database)),
+        ),
+        Provider<QuestionStatsRepository>(
+          create: (_) => DriftQuestionStatsRepository(database),
         ),
       ],
       child: MaterialApp.router(
