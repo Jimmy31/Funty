@@ -1,0 +1,461 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../models/exercise.dart';
+import '../models/question.dart';
+import '../services/question_selector.dart';
+import '../services/reward_calculator.dart';
+import '../services/vosk_recognition_service.dart';
+import '../state/catalog_store.dart';
+import '../state/performance_store.dart';
+
+enum _RunnerStatus { loading, playing, listening, revealed, finished, error }
+
+/// Écran d'exercice générique, piloté par [Exercise.responseMode]
+/// (cf. PRD 6.2). Réutilise le mécanisme de reconnaissance vocale validé par
+/// le spike technique (grammaire fermée sur un mot isolé par question).
+///
+/// Sélection adaptative (PRD 6.5) et calcul des récompenses (PRD 6.7) sont
+/// stubés ([RandomQuestionSelector], [StubRewardCalculator]) — les vrais
+/// algorithmes se branchent derrière ces interfaces sans toucher cet écran.
+class ExerciseRunnerScreen extends StatefulWidget {
+  const ExerciseRunnerScreen({
+    super.key,
+    required this.profileId,
+    required this.exerciseId,
+  });
+
+  final String profileId;
+  final String exerciseId;
+
+  @override
+  State<ExerciseRunnerScreen> createState() => _ExerciseRunnerScreenState();
+}
+
+class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
+  final _voskService = VoskRecognitionService();
+  final _questionSelector = RandomQuestionSelector();
+  final _rewardCalculator = StubRewardCalculator();
+
+  Exercise? _exercise;
+  _RunnerStatus _status = _RunnerStatus.loading;
+  String? _error;
+
+  // Questions "normales" (non séquentielles).
+  int _questionsAnswered = 0;
+  Question? _currentQuestion;
+  int _wrongAttemptsOnCurrent = 0;
+  DateTime? _questionStartedAt;
+  final List<Duration> _responseTimes = [];
+  String _partialText = '';
+  String? _revealedAnswer;
+
+  // Comptage (exercice séquentiel, cf. PRD 5.1/6.2).
+  static const _maxSequentialAttempts = 5;
+  int _sequentialAttemptNumber = 1;
+  int _sequentialIndex = 0; // 0-based ; le chiffre visé est index+1.
+  int _sequentialBestReached = 0;
+
+  int? _finalBadgeLevel;
+  int? _finalSequentialScore;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final exercise = context.read<CatalogStore>().byId(widget.exerciseId);
+    if (exercise == null) {
+      setState(() {
+        _status = _RunnerStatus.error;
+        _error = 'Exercice introuvable.';
+      });
+      return;
+    }
+    _exercise = exercise;
+
+    if (exercise.responseMode.acceptsVocal) {
+      try {
+        await _voskService.initialize();
+        _voskService.partialResults().listen(_onPartial);
+        _voskService.finalResults().listen(_onVocalResult);
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _status = _RunnerStatus.error;
+          _error = e.toString();
+        });
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    if (exercise.isSequentialException) {
+      await _startSequentialQuestion();
+    } else {
+      await _pickNextQuestion();
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Questions normales
+  // ---------------------------------------------------------------------
+
+  Future<void> _pickNextQuestion() async {
+    final exercise = _exercise!;
+    final next = _questionSelector.selectNext(exercise.questions, _currentQuestion);
+    setState(() {
+      _currentQuestion = next;
+      _wrongAttemptsOnCurrent = 0;
+      _partialText = '';
+      _revealedAnswer = null;
+      _status = _RunnerStatus.playing;
+      _questionStartedAt = DateTime.now();
+    });
+    if (exercise.responseMode.acceptsVocal && next.expectedSpokenWord != null) {
+      await _voskService.setGrammar([next.expectedSpokenWord!]);
+    }
+  }
+
+  void _onPartial(String text) {
+    if (!mounted || _status != _RunnerStatus.listening) return;
+    setState(() => _partialText = text);
+  }
+
+  void _onVocalResult(String text) {
+    if (!mounted || text.isEmpty) return;
+    if (_exercise!.isSequentialException) {
+      _handleSequentialAnswer(text);
+    } else {
+      _handleNormalAnswer(spoken: text);
+    }
+  }
+
+  Future<void> _startListening() async {
+    setState(() {
+      _status = _RunnerStatus.listening;
+      _partialText = '';
+    });
+    await _voskService.start();
+  }
+
+  Future<void> _stopListening() async {
+    await _voskService.stop();
+    if (!mounted) return;
+    setState(() => _status = _RunnerStatus.playing);
+  }
+
+  void _handleTactileAnswer(String answer) {
+    _handleNormalAnswer(tactile: answer);
+  }
+
+  Future<void> _handleNormalAnswer({String? spoken, String? tactile}) async {
+    final question = _currentQuestion!;
+    final correct =
+        (spoken != null &&
+            spoken.trim().toLowerCase() == question.expectedSpokenWord) ||
+        (tactile != null && tactile == question.expectedAnswer);
+
+    if (!correct) {
+      setState(() => _wrongAttemptsOnCurrent++);
+      // Révélation de la réponse après 2 échecs (cf. PRD 6.2).
+      if (_wrongAttemptsOnCurrent >= 2) {
+        await _voskService.stop();
+        setState(() {
+          _status = _RunnerStatus.revealed;
+          _revealedAnswer = question.expectedAnswer ?? question.expectedSpokenWord;
+        });
+        Future.delayed(const Duration(seconds: 2), _afterQuestionAnswered);
+      }
+      return;
+    }
+
+    await _voskService.stop();
+    final elapsed = _questionStartedAt == null
+        ? Duration.zero
+        : DateTime.now().difference(_questionStartedAt!);
+    _responseTimes.add(elapsed);
+    _afterQuestionAnswered();
+  }
+
+  Future<void> _afterQuestionAnswered() async {
+    if (!mounted) return;
+    _questionsAnswered++;
+    if (_questionsAnswered >= _exercise!.questionsPerSeries) {
+      await _finishSeries();
+    } else {
+      await _pickNextQuestion();
+    }
+  }
+
+  Future<void> _finishSeries() async {
+    final badgeLevel = _rewardCalculator.calculateBadgeLevel(
+      exercise: _exercise!,
+      responseTimes: _responseTimes,
+    );
+    await context.read<PerformanceStore>().recordAttempt(
+      widget.profileId,
+      widget.exerciseId,
+      badgeLevel: badgeLevel,
+    );
+    if (!mounted) return;
+    setState(() {
+      _finalBadgeLevel = badgeLevel;
+      _status = _RunnerStatus.finished;
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Comptage (exercice séquentiel)
+  // ---------------------------------------------------------------------
+
+  Future<void> _startSequentialQuestion() async {
+    final questions = _exercise!.questions;
+    final question = questions[_sequentialIndex];
+    setState(() {
+      _currentQuestion = question;
+      _partialText = '';
+      _revealedAnswer = null;
+      _status = _RunnerStatus.playing;
+    });
+    await _voskService.setGrammar([question.expectedSpokenWord!]);
+  }
+
+  Future<void> _handleSequentialAnswer(String spoken) async {
+    final question = _currentQuestion!;
+    final correct = spoken.trim().toLowerCase() == question.expectedSpokenWord;
+
+    if (correct) {
+      final reached = _sequentialIndex + 1;
+      if (reached > _sequentialBestReached) _sequentialBestReached = reached;
+      if (reached == _exercise!.questions.length) {
+        // Arrêt automatique dès que l'enfant atteint 10 (cf. PRD 6.7).
+        await _finishSequential();
+        return;
+      }
+      await _voskService.stop();
+      setState(() => _sequentialIndex++);
+      await _startSequentialQuestion();
+      return;
+    }
+
+    // Erreur : révélation orale (texte ici, pas encore d'audio) et reprise
+    // depuis le début (cf. PRD 5.1).
+    await _voskService.stop();
+    setState(() {
+      _status = _RunnerStatus.revealed;
+      _revealedAnswer = question.expectedSpokenWord;
+    });
+    _sequentialAttemptNumber++;
+    Future.delayed(const Duration(seconds: 2), () async {
+      if (!mounted) return;
+      if (_sequentialAttemptNumber > _maxSequentialAttempts) {
+        await _finishSequential();
+      } else {
+        setState(() => _sequentialIndex = 0);
+        await _startSequentialQuestion();
+      }
+    });
+  }
+
+  Future<void> _finishSequential() async {
+    final score = _sequentialBestReached >= 10
+        ? 3
+        : _sequentialBestReached >= 8
+        ? 2
+        : _sequentialBestReached >= 5
+        ? 1
+        : 0;
+    await context.read<PerformanceStore>().recordAttempt(
+      widget.profileId,
+      widget.exerciseId,
+      badgeLevel: score,
+    );
+    if (!mounted) return;
+    setState(() {
+      _finalSequentialScore = score;
+      _status = _RunnerStatus.finished;
+    });
+  }
+
+  @override
+  void dispose() {
+    _voskService.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(_exercise?.title ?? 'Exercice')),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: _buildBody(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_status) {
+      case _RunnerStatus.loading:
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Préparation de l\'exercice...'),
+            ],
+          ),
+        );
+      case _RunnerStatus.error:
+        return Center(
+          child: Text(
+            'Erreur : $_error',
+            style: const TextStyle(color: Colors.red),
+          ),
+        );
+      case _RunnerStatus.finished:
+        return _buildFinished();
+      case _RunnerStatus.playing:
+      case _RunnerStatus.listening:
+      case _RunnerStatus.revealed:
+        return _buildQuestion();
+    }
+  }
+
+  Widget _buildQuestion() {
+    final exercise = _exercise!;
+    final question = _currentQuestion!;
+    final listening = _status == _RunnerStatus.listening;
+    final revealed = _status == _RunnerStatus.revealed;
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Consigne orale systématique (cf. PRD 6.2) : texte pour
+          // l'instant, pas encore le vrai enregistrement audio.
+          Text(
+            exercise.oralInstruction,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            question.displayValue,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 90, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 24),
+          if (revealed)
+            Text(
+              'La bonne réponse était : "$_revealedAnswer"',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, color: Colors.orange),
+            )
+          else ...[
+            if (exercise.responseMode.acceptsVocal)
+              ElevatedButton.icon(
+                onPressed: listening ? _stopListening : _startListening,
+                icon: Icon(listening ? Icons.stop : Icons.mic),
+                label: Text(listening ? 'Arrêter' : 'Écouter'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(20),
+                ),
+              ),
+            if (listening)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  'En cours : "$_partialText"',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            if (exercise.responseMode.acceptsTactile &&
+                question.expectedAnswer != null) ...[
+              const SizedBox(height: 16),
+              _TactileOptions(
+                question: question,
+                onAnswer: _handleTactileAnswer,
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinished() {
+    final exercise = _exercise!;
+    final isSequential = exercise.isSequentialException;
+    final level = isSequential ? _finalSequentialScore! : _finalBadgeLevel!;
+    // Message de fin d'exercice, toujours positif (cf. PRD 6.7). 2-3
+    // variantes texte pour ce squelette — pas encore la banque audio complète.
+    final message = switch (level) {
+      3 => 'Bravo, tu as été super rapide sur ce coup-là !',
+      2 || 1 => 'Bien joué, continue comme ça !',
+      _ =>
+        'Ce n\'est pas grave, avec un peu d\'entraînement tu vas y arriver !',
+    };
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            level > 0 ? Icons.emoji_events : Icons.favorite,
+            size: 72,
+            color: level > 0 ? Colors.amber.shade600 : Colors.pink.shade300,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20),
+          ),
+          const SizedBox(height: 32),
+          FilledButton(
+            onPressed: () => context.pop(),
+            child: const Text('Retour'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TactileOptions extends StatelessWidget {
+  const _TactileOptions({required this.question, required this.onAnswer});
+
+  final Question question;
+  final ValueChanged<String> onAnswer;
+
+  @override
+  Widget build(BuildContext context) {
+    final correct = int.tryParse(question.expectedAnswer ?? '') ?? 0;
+    final options = <int>{
+      correct,
+      correct + 1,
+      if (correct - 1 >= 0) correct - 1,
+      correct + 2,
+    }.toList()..shuffle();
+
+    return Wrap(
+      spacing: 12,
+      alignment: WrapAlignment.center,
+      children: [
+        for (final option in options)
+          OutlinedButton(
+            onPressed: () => onAnswer(option.toString()),
+            child: Text('$option', style: const TextStyle(fontSize: 20)),
+          ),
+      ],
+    );
+  }
+}
