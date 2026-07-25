@@ -473,6 +473,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
               const SizedBox(height: 16),
               _TactileOptions(
                 question: question,
+                maxAnswerValue: exercise.maxAnswerValue,
                 onAnswer: _handleTactileAnswer,
               ),
             ],
@@ -516,23 +517,27 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
 }
 
 class _TactileOptions extends StatelessWidget {
-  const _TactileOptions({required this.question, required this.onAnswer});
+  const _TactileOptions({
+    required this.question,
+    required this.maxAnswerValue,
+    required this.onAnswer,
+  });
 
   final Question question;
+
+  /// Aucune proposition ne doit dépasser cette valeur (ex. 5/10/20 pour les
+  /// exercices Addition, cf. PRD 6.2) — `null` = pas de plafond.
+  final int? maxAnswerValue;
   final ValueChanged<String> onAnswer;
 
   @override
   Widget build(BuildContext context) {
     final correct = int.tryParse(question.expectedAnswer ?? '') ?? 0;
-    final options = <int>{
-      correct,
-      correct + 1,
-      if (correct - 1 >= 0) correct - 1,
-      correct + 2,
-    }.toList()..shuffle();
+    final options = _buildOptions(correct, maxAnswerValue, Random());
 
     return Wrap(
       spacing: 12,
+      runSpacing: 12,
       alignment: WrapAlignment.center,
       children: [
         for (final option in options)
@@ -542,5 +547,26 @@ class _TactileOptions extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  /// 5 à 8 propositions au total, groupées autour de [correct], sans
+  /// jamais dépasser [maxValue] ni descendre sous 0 (cf. PRD 6.2). Peut
+  /// renvoyer moins de 5 si l'exercice n'offre pas assez de valeurs valides
+  /// à proximité (ex. correct = maxValue).
+  static List<int> _buildOptions(int correct, int? maxValue, Random random) {
+    final nearby = <int>[];
+    for (var distance = 1; nearby.length < 12 && distance <= 12; distance++) {
+      for (final candidate in [correct - distance, correct + distance]) {
+        if (candidate < 0) continue;
+        if (maxValue != null && candidate > maxValue) continue;
+        nearby.add(candidate);
+      }
+    }
+
+    final targetTotal = 5 + random.nextInt(4); // 5 à 8 propositions
+    final distractorCount = (targetTotal - 1).clamp(0, nearby.length);
+    final distractors = nearby.take(distractorCount).toList();
+
+    return [correct, ...distractors]..shuffle(random);
   }
 }

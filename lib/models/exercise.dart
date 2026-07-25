@@ -23,6 +23,7 @@ class Exercise {
     this.goldThreshold = const Duration(seconds: 2),
     this.isSequentialException = false,
     this.randomPresentation = false,
+    this.maxAnswerValue,
     this.questions = const [],
   });
 
@@ -61,6 +62,11 @@ class Exercise {
   /// présentation visuelle de la lettre change.
   final bool randomPresentation;
 
+  /// Borne supérieure des propositions QCM (cf. PRD 6.2) : pour les
+  /// exercices Addition ≤5/≤10/≤20, aucune proposition ne doit dépasser ce
+  /// plafond. `null` = pas de plafond (ex. Soustraction).
+  final int? maxAnswerValue;
+
   final List<Question> questions;
 
   /// Applique un réglage parental (cf. PRD 6.6/6.7) par-dessus les valeurs
@@ -86,6 +92,7 @@ class Exercise {
       goldThreshold: goldThreshold ?? this.goldThreshold,
       isSequentialException: isSequentialException,
       randomPresentation: randomPresentation,
+      maxAnswerValue: maxAnswerValue,
       questions: questions,
     );
   }

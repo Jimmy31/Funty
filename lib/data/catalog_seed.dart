@@ -258,6 +258,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.gs,
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
+      maxAnswerValue: 5,
       questions: _additionQuestions(additionCinqId, const [
         (1, 1),
         (2, 1),
@@ -275,6 +276,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.gs,
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
+      maxAnswerValue: 10,
       questions: _additionQuestions(additionDixId, const [
         (4, 3),
         (5, 3),
@@ -292,6 +294,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.cp,
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
+      maxAnswerValue: 20,
       questions: _additionQuestions(additionVingtId, const [
         (8, 5),
         (9, 7),
