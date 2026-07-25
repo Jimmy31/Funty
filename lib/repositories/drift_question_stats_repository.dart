@@ -66,4 +66,26 @@ class DriftQuestionStatsRepository implements QuestionStatsRepository {
     final totalMs = rows.fold<int>(0, (sum, row) => sum + row.responseTimeMs);
     return Duration(milliseconds: totalMs ~/ rows.length);
   }
+
+  @override
+  Future<Map<String, Duration>> averageResponseTimeByQuestion(
+    String profileId,
+    String exerciseId,
+  ) async {
+    final avgExpr = _db.questionAttempts.responseTimeMs.avg();
+    final query = _db.selectOnly(_db.questionAttempts)
+      ..addColumns([_db.questionAttempts.questionId, avgExpr])
+      ..where(
+        _db.questionAttempts.profileId.equals(profileId) &
+            _db.questionAttempts.exerciseId.equals(exerciseId),
+      )
+      ..groupBy([_db.questionAttempts.questionId]);
+    final rows = await query.get();
+    return {
+      for (final row in rows)
+        row.read(_db.questionAttempts.questionId)!: Duration(
+          milliseconds: (row.read(avgExpr) ?? 0).round(),
+        ),
+    };
+  }
 }

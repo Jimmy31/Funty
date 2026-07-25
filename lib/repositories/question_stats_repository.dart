@@ -27,4 +27,13 @@ abstract class QuestionStatsRepository {
     String questionId, {
     int sampleSize = 3,
   });
+
+  /// Temps de réponse moyen par question, sur l'historique complet (pas
+  /// seulement les 3 dernières tentatives comme [averageResponseTime], qui
+  /// sert à la sélection) — alimente les statistiques par question du
+  /// tableau de bord parental (cf. PRD 6.6).
+  Future<Map<String, Duration>> averageResponseTimeByQuestion(
+    String profileId,
+    String exerciseId,
+  );
 }
