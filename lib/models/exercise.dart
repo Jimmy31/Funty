@@ -22,6 +22,7 @@ class Exercise {
     this.silverThreshold = const Duration(seconds: 4),
     this.goldThreshold = const Duration(seconds: 2),
     this.isSequentialException = false,
+    this.randomPresentation = false,
     this.questions = const [],
   });
 
@@ -53,6 +54,12 @@ class Exercise {
   /// donc ni sélection adaptative, ni séries/paliers de récompense, ni règle
   /// des 2 échecs ne s'appliquent (cf. PRD 6.2 et 5.1).
   final bool isSequentialException;
+
+  /// Vrai pour les variantes "présentation aléatoire" de l'Alphabet
+  /// (orientation/police/taille aléatoires, cf. PRD 5.1/8.1) — la
+  /// mécanique de réponse reste identique à la variante standard, seule la
+  /// présentation visuelle de la lettre change.
+  final bool randomPresentation;
 
   final List<Question> questions;
 }

@@ -79,6 +79,19 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
+  # Pool de polices pour les variantes "présentation aléatoire" de
+  # l'Alphabet (cf. PRD 5.1/8.1) : Roboto (police par défaut, pas d'asset
+  # nécessaire), Noto Sans et Comic Neue — équivalents libres de
+  # Verdana/Comic Sans MS actées dans le PRD, pas de droits de
+  # redistribution vérifiés pour les polices Microsoft elles-mêmes.
+  fonts:
+    - family: Noto Sans
+      fonts:
+        - asset: assets/fonts/NotoSans.ttf
+    - family: Comic Neue
+      fonts:
+        - asset: assets/fonts/ComicNeue-Regular.ttf
+
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a

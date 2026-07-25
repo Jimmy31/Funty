@@ -199,10 +199,7 @@ List<Exercise> buildCatalogSeed() {
       oralInstruction: 'Dis le nom de la lettre affichée.',
       schoolGrade: SchoolGrade.ps,
       responseMode: ResponseMode.vocal,
-      // TODO(affichage-aleatoire): brancher la police/rotation aléatoire
-      // (max 45° pour les lettres à risque de confusion, cf. PRD 5.1) — pas
-      // encore fait dans ce squelette, le contenu des questions est identique
-      // à la variante standard.
+      randomPresentation: true,
       questions: _letterQuestions(alphaMajAleaId, lowercase: false),
     ),
     Exercise(
@@ -223,7 +220,7 @@ List<Exercise> buildCatalogSeed() {
       oralInstruction: 'Dis le nom de la lettre affichée.',
       schoolGrade: SchoolGrade.ms,
       responseMode: ResponseMode.vocal,
-      // TODO(affichage-aleatoire): voir remarque équivalente ci-dessus.
+      randomPresentation: true,
       questions: _letterQuestions(alphaMinAleaId, lowercase: true),
     ),
     Exercise(

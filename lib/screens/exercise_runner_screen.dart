@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +9,7 @@ import '../models/question.dart';
 import '../repositories/question_stats_repository.dart';
 import '../services/adaptive_question_selector.dart';
 import '../services/end_message_bank.dart';
+import '../services/letter_presentation.dart';
 import '../services/question_selector.dart';
 import '../services/reward_calculator.dart';
 import '../services/vosk_recognition_service.dart';
@@ -54,6 +57,8 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   final List<Duration> _responseTimes = [];
   String _partialText = '';
   String? _revealedAnswer;
+  final _presentationRandom = Random();
+  LetterPresentation? _presentation;
 
   // Comptage (exercice séquentiel, cf. PRD 5.1/6.2).
   static const _maxSequentialAttempts = 5;
@@ -127,6 +132,11 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       _revealedAnswer = null;
       _status = _RunnerStatus.playing;
       _questionStartedAt = DateTime.now();
+      // Présentation visuelle aléatoire pour les variantes Alphabet
+      // concernées (cf. PRD 5.1/8.1) — tirée à chaque nouvelle question.
+      _presentation = exercise.randomPresentation
+          ? randomLetterPresentation(next.displayValue, _presentationRandom)
+          : null;
     });
     if (exercise.responseMode.acceptsVocal && next.expectedSpokenWord != null) {
       await _voskService.setGrammar([next.expectedSpokenWord!]);
@@ -365,6 +375,23 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     }
   }
 
+  /// Affiche la valeur de la question, avec police/rotation aléatoires
+  /// pour les variantes Alphabet concernées (cf. PRD 5.1/8.1).
+  Widget _buildLetterDisplay(String displayValue) {
+    final presentation = _presentation;
+    final text = Text(
+      displayValue,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 90,
+        fontWeight: FontWeight.bold,
+        fontFamily: presentation?.fontFamily,
+      ),
+    );
+    if (presentation == null) return text;
+    return Transform.rotate(angle: presentation.rotation, child: text);
+  }
+
   Widget _buildQuestion() {
     final exercise = _exercise!;
     final question = _currentQuestion!;
@@ -384,11 +411,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 24),
-          Text(
-            question.displayValue,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 90, fontWeight: FontWeight.bold),
-          ),
+          _buildLetterDisplay(question.displayValue),
           const SizedBox(height: 24),
           if (revealed)
             Text(
