@@ -1,7 +1,7 @@
 # PRD — Funty
 ## Application éducative pour enfants (3-12 ans)
 
-**Version** : 0.35 (métadonnées techniques masquées côté enfant : classe scolaire, icône de mode de réponse)
+**Version** : 0.36 (indicateur de progression "x / y" ajouté à l'écran d'exercice)
 **Date** : 2026-07-25
 **Statut** : En discussion
 
@@ -140,6 +140,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Paramètres de récompense par exercice** : le **nombre de questions par série** et les **seuils de temps bronze/argent/or** (cf. 6.7) sont des réglages propres à chaque exercice (une addition peut avoir des seuils différents d'une lettre isolée), **pas propres à un profil** — le parent les ajuste une fois par exercice, et ce réglage s'applique alors à tous les profils de l'appareil qui pratiquent cet exercice. Une valeur par défaut raisonnable est proposée par exercice, ajustable ensuite dans l'espace parental (cf. 6.6).
 - **Révélation de la réponse après 2 échecs, avec pénalité de temps** : sur la plupart des exercices, si l'enfant se trompe 2 fois de suite sur la même question, l'application donne la bonne réponse (à l'oral, cohérent avec la consigne orale systématique) avant de passer à la question suivante — pas de blocage indéfini sur une question. Cet événement ajoute une **pénalité de 5 secondes** au temps de réponse enregistré pour cette question (cf. 6.5), pour que la difficulté se reflète dans le suivi même si le temps "brut" ne compte que jusqu'à la bonne réponse.
 - **Consigne orale systématique** : chaque exercice, quel que soit son mode de réponse, explique sa tâche à l'enfant **à l'oral** (ex. "Compte les chats et dis le nombre à voix haute"), et pas seulement par texte ou pictogramme — indispensable pour les enfants qui ne savent pas encore lire (PS notamment). C'est une métadonnée/asset obligatoire de chaque exercice, pas une option.
+- **Indicateur de progression confirmé** : pendant une série, une barre de progression graphique et un repère chiffré ("5 / 20", question courante sur total de la série) restent visibles en haut de l'écran d'exercice, pour que l'enfant (et le parent qui l'accompagne) voie combien il reste de questions. Pour Comptage, qui n'a pas de série au sens habituel (cf. ci-dessus), affiche plutôt la position atteinte dans la tentative en cours sur le total à atteindre (1 à 10).
 - **Granularité "question"** : pour la plupart des exercices, le contenu se décompose en **questions/items individuels** au sein d'un même exercice (ex. les 26 lettres de l'exercice Alphabet, les paires possibles de l'exercice Addition ≤5, les types d'objets de Dénombrement). C'est à ce niveau, plus fin que l'exercice, que porte le suivi des performances et la sélection adaptative (cf. 6.5). **L'exercice Comptage n'entre pas dans ce modèle** : ce n'est pas un enchaînement de questions aléatoires indépendantes mais une tâche continue (réciter 1 à 10), donc ni la granularité "question", ni la sélection adaptative, ni les paramètres de récompense par série (cf. 6.7) ne s'y appliquent — cf. 5.1 pour sa règle propre.
 
 ### 6.3 Sélection des exercices par profil (curation parentale)

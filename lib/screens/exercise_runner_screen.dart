@@ -423,6 +423,38 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     return Transform.rotate(angle: presentation.rotation, child: text);
   }
 
+  /// Progression dans la série (ex. "5 / 20") — pour Comptage, position
+  /// dans la tentative en cours plutôt qu'une série au sens habituel (cf.
+  /// PRD 6.2 : Comptage n'a pas de série de questions).
+  Widget _buildProgressIndicator() {
+    final exercise = _exercise!;
+    final int current;
+    final int total;
+    if (exercise.isSequentialException) {
+      current = _sequentialIndex + 1;
+      total = exercise.questions.length;
+    } else {
+      current = _questionsAnswered + 1;
+      total = exercise.questionsPerSeries;
+    }
+    final progress = (current / total).clamp(0.0, 1.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(value: progress, minHeight: 8),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$current / $total',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+      ],
+    );
+  }
+
   Widget _buildQuestion() {
     final exercise = _exercise!;
     final question = _currentQuestion!;
@@ -434,6 +466,8 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _buildProgressIndicator(),
+          const SizedBox(height: 16),
           // Consigne orale systématique (cf. PRD 6.2) : texte pour
           // l'instant, pas encore le vrai enregistrement audio.
           Text(
