@@ -149,6 +149,10 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     });
     if (exercise.responseMode.acceptsVocal && next.expectedSpokenWord != null) {
       await _voskService.setGrammar([next.expectedSpokenWord!]);
+      // Écoute automatique dès l'apparition de la question (cf. PRD 6.2) :
+      // pas besoin d'appuyer sur un bouton, l'enfant peut répondre tout de
+      // suite à voix haute.
+      await _startListening();
     }
   }
 
@@ -172,12 +176,6 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       _partialText = '';
     });
     await _voskService.start();
-  }
-
-  Future<void> _stopListening() async {
-    await _voskService.stop();
-    if (!mounted) return;
-    setState(() => _status = _RunnerStatus.playing);
   }
 
   void _handleTactileAnswer(String answer) {
@@ -289,6 +287,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       _status = _RunnerStatus.playing;
     });
     await _voskService.setGrammar([question.expectedSpokenWord!]);
+    await _startListening();
   }
 
   Future<void> _handleSequentialAnswer(String spoken) async {
@@ -485,23 +484,30 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
               style: const TextStyle(fontSize: 18, color: Colors.orange),
             )
           else ...[
-            if (exercise.responseMode.acceptsVocal)
-              ElevatedButton.icon(
-                onPressed: listening ? _stopListening : _startListening,
-                icon: Icon(listening ? Icons.stop : Icons.mic),
-                label: Text(listening ? 'Arrêter' : 'Écouter'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(20),
-                ),
+            // Écoute automatique (cf. PRD 6.2) : simple indicateur passif,
+            // pas de bouton à presser pour déclencher la reconnaissance.
+            if (exercise.responseMode.acceptsVocal) ...[
+              Icon(
+                Icons.mic,
+                size: 48,
+                color: listening
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey,
               ),
-            if (listening)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  'En cours : "$_partialText"',
-                  textAlign: TextAlign.center,
-                ),
+              const SizedBox(height: 8),
+              Text(
+                listening ? 'Je t\'écoute...' : 'Préparation du micro...',
+                textAlign: TextAlign.center,
               ),
+              if (listening)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    'En cours : "$_partialText"',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
             if (exercise.responseMode.acceptsTactile &&
                 question.expectedAnswer != null) ...[
               const SizedBox(height: 16),
