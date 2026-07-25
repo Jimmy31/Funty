@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'app.dart';
+import 'data/database.dart';
+import 'data/seed_database.dart';
 
-void main() {
-  runApp(const FuntyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final database = AppDatabase();
+  await seedDatabaseIfEmpty(database);
+  runApp(FuntyApp(database: database));
 }

@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'repositories/catalog_repository.dart';
-import 'repositories/performance_repository.dart';
-import 'repositories/profile_repository.dart';
+import 'data/database.dart';
+import 'repositories/drift_catalog_repository.dart';
+import 'repositories/drift_performance_repository.dart';
+import 'repositories/drift_profile_repository.dart';
 import 'routing/app_router.dart';
 import 'state/catalog_store.dart';
 import 'state/performance_store.dart';
 import 'state/profile_store.dart';
 
 class FuntyApp extends StatelessWidget {
-  const FuntyApp({super.key});
+  const FuntyApp({super.key, required this.database});
+
+  final AppDatabase database;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => ProfileStore(InMemoryProfileRepository()),
+          create: (_) => ProfileStore(DriftProfileRepository(database)),
         ),
         ChangeNotifierProvider(
-          create: (_) => CatalogStore(InMemoryCatalogRepository()),
+          create: (_) => CatalogStore(DriftCatalogRepository(database)),
         ),
         ChangeNotifierProvider(
-          create: (_) => PerformanceStore(InMemoryPerformanceRepository()),
+          create: (_) =>
+              PerformanceStore(DriftPerformanceRepository(database)),
         ),
       ],
       child: MaterialApp.router(

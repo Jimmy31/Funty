@@ -32,27 +32,33 @@ class _CreateProfileDialogState extends State<CreateProfileDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Nouveau profil'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _nameController,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Prénom'),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final avatar in kAvailableAvatars)
-                ChoiceChip(
-                  label: Text(avatar, style: const TextStyle(fontSize: 20)),
-                  selected: _selectedAvatar == avatar,
-                  onSelected: (_) => setState(() => _selectedAvatar = avatar),
-                ),
-            ],
-          ),
-        ],
+      // SingleChildScrollView : avec le clavier ouvert sur un petit écran,
+      // le nom + les 8 avatars ne tiennent pas toujours dans la hauteur
+      // restante (overflow observé sur appareil réel).
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Prénom'),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final avatar in kAvailableAvatars)
+                  ChoiceChip(
+                    label: Text(avatar, style: const TextStyle(fontSize: 20)),
+                    selected: _selectedAvatar == avatar,
+                    onSelected: (_) =>
+                        setState(() => _selectedAvatar = avatar),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(

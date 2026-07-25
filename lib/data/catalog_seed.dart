@@ -360,6 +360,19 @@ List<Profile> buildProfileSeed() {
   ];
 }
 
+/// Activation initiale des exercices pour les profils seedés, pour que la
+/// vue enfant ne soit pas vide au tout premier lancement.
+Map<String, Set<String>> buildActivationSeed() {
+  return {
+    'profile-demo-1': {
+      'ex-nombres',
+      'ex-alphabet-majuscule-standard',
+      'ex-comptage',
+    },
+    'profile-demo-2': {'ex-formes', 'ex-alphabet-majuscule-standard'},
+  };
+}
+
 /// Quelques lignes de performance factices pour que le tableau de bord ne
 /// soit pas vide (cf. PRD 6.6) — pas de vrai calcul pour ce passage.
 List<ExercisePerformanceStub> buildPerformanceSeed() {
