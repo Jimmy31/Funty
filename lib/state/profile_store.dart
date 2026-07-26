@@ -34,6 +34,15 @@ class ProfileStore extends ChangeNotifier {
     return profile;
   }
 
+  Future<void> updateProfile(
+    String id, {
+    required String name,
+    required String avatarId,
+  }) async {
+    await _repository.update(id, name: name, avatarId: avatarId);
+    await _load();
+  }
+
   Future<void> deleteProfile(String id) async {
     await _repository.delete(id);
     await _load();

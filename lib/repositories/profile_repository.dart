@@ -11,5 +11,7 @@ abstract class ProfileRepository {
 
   Future<Profile> create({required String name, required String avatarId});
 
+  Future<void> update(String id, {required String name, required String avatarId});
+
   Future<void> delete(String id);
 }

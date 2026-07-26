@@ -75,6 +75,18 @@ class ExerciseSettings extends Table {
   Set<Column> get primaryKey => {exerciseId};
 }
 
+/// Réglages globaux de l'application — une seule ligne (id fixe = 0). Pour
+/// l'instant, uniquement le code PIN parental (cf. PRD 6.1/6.6), modifiable
+/// depuis l'espace parental plutôt que codé en dur.
+@DataClassName('AppSettingsRow')
+class AppSettings extends Table {
+  IntColumn get id => integer()();
+  TextColumn get pinCode => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Profiles,
@@ -82,13 +94,14 @@ class ExerciseSettings extends Table {
     Performances,
     QuestionAttempts,
     ExerciseSettings,
+    AppSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -99,6 +112,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.createTable(exerciseSettings);
+      }
+      if (from < 4) {
+        await m.createTable(appSettings);
       }
     },
   );

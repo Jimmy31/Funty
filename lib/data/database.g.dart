@@ -1792,6 +1792,196 @@ class ExerciseSettingsCompanion extends UpdateCompanion<ExerciseSettingsRow> {
   }
 }
 
+class $AppSettingsTable extends AppSettings
+    with TableInfo<$AppSettingsTable, AppSettingsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinCodeMeta = const VerificationMeta(
+    'pinCode',
+  );
+  @override
+  late final GeneratedColumn<String> pinCode = GeneratedColumn<String>(
+    'pin_code',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, pinCode];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppSettingsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('pin_code')) {
+      context.handle(
+        _pinCodeMeta,
+        pinCode.isAcceptableOrUnknown(data['pin_code']!, _pinCodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pinCodeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AppSettingsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppSettingsRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      pinCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pin_code'],
+      )!,
+    );
+  }
+
+  @override
+  $AppSettingsTable createAlias(String alias) {
+    return $AppSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class AppSettingsRow extends DataClass implements Insertable<AppSettingsRow> {
+  final int id;
+  final String pinCode;
+  const AppSettingsRow({required this.id, required this.pinCode});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['pin_code'] = Variable<String>(pinCode);
+    return map;
+  }
+
+  AppSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AppSettingsCompanion(id: Value(id), pinCode: Value(pinCode));
+  }
+
+  factory AppSettingsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppSettingsRow(
+      id: serializer.fromJson<int>(json['id']),
+      pinCode: serializer.fromJson<String>(json['pinCode']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'pinCode': serializer.toJson<String>(pinCode),
+    };
+  }
+
+  AppSettingsRow copyWith({int? id, String? pinCode}) =>
+      AppSettingsRow(id: id ?? this.id, pinCode: pinCode ?? this.pinCode);
+  AppSettingsRow copyWithCompanion(AppSettingsCompanion data) {
+    return AppSettingsRow(
+      id: data.id.present ? data.id.value : this.id,
+      pinCode: data.pinCode.present ? data.pinCode.value : this.pinCode,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppSettingsRow(')
+          ..write('id: $id, ')
+          ..write('pinCode: $pinCode')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, pinCode);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppSettingsRow &&
+          other.id == this.id &&
+          other.pinCode == this.pinCode);
+}
+
+class AppSettingsCompanion extends UpdateCompanion<AppSettingsRow> {
+  final Value<int> id;
+  final Value<String> pinCode;
+  const AppSettingsCompanion({
+    this.id = const Value.absent(),
+    this.pinCode = const Value.absent(),
+  });
+  AppSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    required String pinCode,
+  }) : pinCode = Value(pinCode);
+  static Insertable<AppSettingsRow> custom({
+    Expression<int>? id,
+    Expression<String>? pinCode,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (pinCode != null) 'pin_code': pinCode,
+    });
+  }
+
+  AppSettingsCompanion copyWith({Value<int>? id, Value<String>? pinCode}) {
+    return AppSettingsCompanion(
+      id: id ?? this.id,
+      pinCode: pinCode ?? this.pinCode,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (pinCode.present) {
+      map['pin_code'] = Variable<String>(pinCode.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('pinCode: $pinCode')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1804,6 +1994,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ExerciseSettingsTable exerciseSettings = $ExerciseSettingsTable(
     this,
   );
+  late final $AppSettingsTable appSettings = $AppSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1814,6 +2005,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     performances,
     questionAttempts,
     exerciseSettings,
+    appSettings,
   ];
 }
 
@@ -2820,6 +3012,131 @@ typedef $$ExerciseSettingsTableProcessedTableManager =
       ExerciseSettingsRow,
       PrefetchHooks Function()
     >;
+typedef $$AppSettingsTableCreateCompanionBuilder =
+    AppSettingsCompanion Function({Value<int> id, required String pinCode});
+typedef $$AppSettingsTableUpdateCompanionBuilder =
+    AppSettingsCompanion Function({Value<int> id, Value<String> pinCode});
+
+class $$AppSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pinCode => $composableBuilder(
+    column: $table.pinCode,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pinCode => $composableBuilder(
+    column: $table.pinCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get pinCode =>
+      $composableBuilder(column: $table.pinCode, builder: (column) => column);
+}
+
+class $$AppSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppSettingsTable,
+          AppSettingsRow,
+          $$AppSettingsTableFilterComposer,
+          $$AppSettingsTableOrderingComposer,
+          $$AppSettingsTableAnnotationComposer,
+          $$AppSettingsTableCreateCompanionBuilder,
+          $$AppSettingsTableUpdateCompanionBuilder,
+          (
+            AppSettingsRow,
+            BaseReferences<_$AppDatabase, $AppSettingsTable, AppSettingsRow>,
+          ),
+          AppSettingsRow,
+          PrefetchHooks Function()
+        > {
+  $$AppSettingsTableTableManager(_$AppDatabase db, $AppSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> pinCode = const Value.absent(),
+              }) => AppSettingsCompanion(id: id, pinCode: pinCode),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String pinCode,
+              }) => AppSettingsCompanion.insert(id: id, pinCode: pinCode),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppSettingsTable,
+      AppSettingsRow,
+      $$AppSettingsTableFilterComposer,
+      $$AppSettingsTableOrderingComposer,
+      $$AppSettingsTableAnnotationComposer,
+      $$AppSettingsTableCreateCompanionBuilder,
+      $$AppSettingsTableUpdateCompanionBuilder,
+      (
+        AppSettingsRow,
+        BaseReferences<_$AppDatabase, $AppSettingsTable, AppSettingsRow>,
+      ),
+      AppSettingsRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2834,4 +3151,6 @@ class $AppDatabaseManager {
       $$QuestionAttemptsTableTableManager(_db, _db.questionAttempts);
   $$ExerciseSettingsTableTableManager get exerciseSettings =>
       $$ExerciseSettingsTableTableManager(_db, _db.exerciseSettings);
+  $$AppSettingsTableTableManager get appSettings =>
+      $$AppSettingsTableTableManager(_db, _db.appSettings);
 }

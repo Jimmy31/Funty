@@ -2,19 +2,32 @@ import 'package:flutter/material.dart';
 
 const kAvailableAvatars = ['🦊', '🐸', '🐼', '🦁', '🐨', '🐵', '🦄', '🐙'];
 
-/// Dialogue de création de profil (nom + avatar), partagé entre la
-/// sélection de profil et le tableau de bord parental. Retourne
-/// `(nom, avatarId)` ou `null` si annulé.
+/// Dialogue de création **ou d'édition** de profil (nom + avatar), partagé
+/// entre la sélection de profil et le tableau de bord parental. Passer
+/// [initialName] bascule en mode édition (titre et bouton adaptés).
+/// Retourne `(nom, avatarId)` ou `null` si annulé.
 class CreateProfileDialog extends StatefulWidget {
-  const CreateProfileDialog({super.key});
+  const CreateProfileDialog({
+    super.key,
+    this.initialName,
+    this.initialAvatarId,
+  });
+
+  final String? initialName;
+  final String? initialAvatarId;
 
   @override
   State<CreateProfileDialog> createState() => _CreateProfileDialogState();
 }
 
 class _CreateProfileDialogState extends State<CreateProfileDialog> {
-  final _nameController = TextEditingController();
-  String _selectedAvatar = kAvailableAvatars.first;
+  late final _nameController = TextEditingController(
+    text: widget.initialName ?? '',
+  );
+  late String _selectedAvatar =
+      widget.initialAvatarId ?? kAvailableAvatars.first;
+
+  bool get _isEditing => widget.initialName != null;
 
   @override
   void initState() {
@@ -31,7 +44,7 @@ class _CreateProfileDialogState extends State<CreateProfileDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nouveau profil'),
+      title: Text(_isEditing ? 'Modifier le profil' : 'Nouveau profil'),
       // SingleChildScrollView : avec le clavier ouvert sur un petit écran,
       // le nom + les 8 avatars ne tiennent pas toujours dans la hauteur
       // restante (overflow observé sur appareil réel).
@@ -71,7 +84,7 @@ class _CreateProfileDialogState extends State<CreateProfileDialog> {
               : () => Navigator.of(
                   context,
                 ).pop((_nameController.text.trim(), _selectedAvatar)),
-          child: const Text('Créer'),
+          child: Text(_isEditing ? 'Enregistrer' : 'Créer'),
         ),
       ],
     );

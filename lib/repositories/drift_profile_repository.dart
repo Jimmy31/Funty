@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/database.dart';
@@ -46,6 +47,19 @@ class DriftProfileRepository implements ProfileRepository {
           ),
         );
     return profile;
+  }
+
+  @override
+  Future<void> update(
+    String id, {
+    required String name,
+    required String avatarId,
+  }) async {
+    await (_db.update(
+      _db.profiles,
+    )..where((t) => t.id.equals(id))).write(
+      ProfilesCompanion(name: Value(name), avatarId: Value(avatarId)),
+    );
   }
 
   @override

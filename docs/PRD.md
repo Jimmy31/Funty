@@ -1,7 +1,7 @@
 # PRD — Funty
 ## Application éducative pour enfants (3-12 ans)
 
-**Version** : 0.38 (corrige les propositions QCM qui changeaient en continu pendant une question)
+**Version** : 0.39 (accès direct au catalogue, code PIN modifiable, édition de profil)
 **Date** : 2026-07-25
 **Statut** : En discussion
 
@@ -168,9 +168,9 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Ne s'applique pas à l'exercice Comptage**, qui n'est pas composé de questions aléatoires indépendantes (cf. 6.2 et 5.1).
 
 ### 6.6 Espace parental
-- Accès protégé par un **code PIN** pour empêcher l'enfant d'y entrer seul.
-- Gestion des profils : créer/modifier/supprimer un profil enfant.
-- Curation des exercices par profil (cf. 6.3).
+- Accès protégé par un **code PIN** pour empêcher l'enfant d'y entrer seul. **Code modifiable par le parent** (menu dédié dans l'espace parental : code actuel + nouveau code + confirmation), persisté sur l'appareil — placeholder "1234" tant qu'il n'a pas été changé.
+- Gestion des profils : créer/modifier/supprimer un profil enfant. **Modifier** couvre le prénom et l'avatar, via le même dialogue que la création.
+- Curation des exercices par profil (cf. 6.3), avec un **accès direct au catalogue** depuis le tableau de bord (pas seulement via "Curer les exercices" d'un profil précis).
 - Tableau de bord de performance par profil : temps passé, exercices/thèmes pratiqués, taux de réussite (cf. 6.4).
 - **Statistiques par question** : le parent peut consulter les questions précises qui posent le plus de difficulté à l'enfant au sein d'un exercice (ex. "l'enfant a plus de mal avec la lettre Y" ou "avec l'addition 7+8"), sur la base du suivi par question (cf. 6.4 et 6.5).
 - **Niveau de récompense par exercice** (cf. 6.7) : visible dans le tableau de bord comme indicateur simple et lisible de la maîtrise de l'enfant sur chaque exercice, en complément des statistiques plus détaillées.
@@ -269,8 +269,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Métadonnées techniques masquées côté enfant** : classe scolaire et icône de mode de réponse retirées des cartes d'exercice de la vue enfant (ne servaient à rien pour l'enfant), conservées dans le catalogue parental — cf. 6.2/6.3.
 - **Indicateur de progression ajouté** et **écoute vocale automatique sans bouton** — cf. entrées correspondantes en 6.2.
 - **Bug corrigé : les propositions QCM changeaient continuellement pendant une question.** Cause : elles étaient recalculées (et remélangées) à chaque reconstruction de l'écran d'exercice, ce que l'écoute vocale continue désormais active déclenche très fréquemment (un événement à chaque résultat partiel de reconnaissance). Les propositions sont maintenant tirées une seule fois à l'apparition de la question et conservées telles quelles jusqu'à la réponse — cf. 6.2.
-
-### 8.2 Points encore ouverts
+- **Trois compléments à l'espace parental, actés et implémentés** : (1) accès direct au catalogue depuis le tableau de bord, sans passer par "Curer les exercices" d'un profil précis ; (2) code PIN désormais persisté et modifiable via un menu dédié (code actuel + nouveau + confirmation), plutôt que fixé en dur ; (3) édition du prénom et de l'avatar d'un profil existant, via le même dialogue que la création — cf. 6.6.
 
 Aucune question ouverte à ce stade — tous les points soulevés jusqu'ici ont été tranchés (cf. 8.1). De nouvelles questions apparaîtront naturellement à mesure que la conception détaillée avance.
 
