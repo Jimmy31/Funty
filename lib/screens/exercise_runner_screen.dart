@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../data/animal_families.dart';
 import '../models/exercise.dart';
 import '../models/question.dart';
 import '../repositories/question_stats_repository.dart';
@@ -69,6 +70,13 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   final _presentationRandom = Random();
   LetterPresentation? _presentation;
   List<int>? _tactileOptions;
+
+  // Dénombrement : famille d'animaux et images tirées au hasard à chaque
+  // question (cf. PRD 5.1) — jamais la même famille deux questions de
+  // suite.
+  final _denombrementRandom = Random();
+  List<String>? _denombrementImages;
+  String? _lastAnimalFamily;
 
   // Comptage (exercice séquentiel, cf. PRD 5.1/6.2).
   static const _maxSequentialAttempts = 5;
@@ -146,6 +154,9 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       // concernées (cf. PRD 5.1/8.1) — tirée à chaque nouvelle question.
       _presentation = exercise.randomPresentation
           ? randomLetterPresentation(next.displayValue, _presentationRandom)
+          : null;
+      _denombrementImages = next.objectCount != null
+          ? _pickDenombrementImages(next.objectCount!)
           : null;
       // Propositions QCM tirées une seule fois par question (cf. PRD 6.2) —
       // sinon elles se régénèrent à chaque reconstruction de l'écran (ex. à
@@ -435,6 +446,40 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     return Transform.rotate(angle: presentation.rotation, child: text);
   }
 
+  /// Tire une famille d'animaux (différente de la précédente question, cf.
+  /// PRD 5.1) puis [count] images distinctes au hasard dans cette famille.
+  List<String> _pickDenombrementImages(int count) {
+    var family = animalFamilyFolders[
+        _denombrementRandom.nextInt(animalFamilyFolders.length)];
+    if (animalFamilyFolders.length > 1) {
+      while (family == _lastAnimalFamily) {
+        family = animalFamilyFolders[
+            _denombrementRandom.nextInt(animalFamilyFolders.length)];
+      }
+    }
+    _lastAnimalFamily = family;
+    final indices = List.generate(imagesPerAnimalFamily, (i) => i + 1)
+      ..shuffle(_denombrementRandom);
+    return indices
+        .take(count)
+        .map((i) => animalImagePath(family, i))
+        .toList();
+  }
+
+  /// Dénombrement : les objets à compter, en images plutôt qu'en texte (cf.
+  /// PRD 5.1) — une image par objet, dans une grille qui s'adapte au nombre.
+  Widget _buildObjectImages(List<String> assets) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final asset in assets)
+          Image.asset(asset, width: 90, height: 90, fit: BoxFit.contain),
+      ],
+    );
+  }
+
   /// Progression dans la série (ex. "5 / 20") — pour Comptage, position
   /// dans la tentative en cours plutôt qu'une série au sens habituel (cf.
   /// PRD 6.2 : Comptage n'a pas de série de questions).
@@ -488,7 +533,10 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 24),
-          _buildLetterDisplay(question.displayValue),
+          if (_denombrementImages != null)
+            _buildObjectImages(_denombrementImages!)
+          else
+            _buildLetterDisplay(question.displayValue),
           const SizedBox(height: 24),
           if (revealed)
             Text(

@@ -159,20 +159,16 @@ List<Question> _countingQuestions(String exerciseId) {
   });
 }
 
-List<Question> _denombrementQuestions(
-  String exerciseId,
-  int maxCount, {
-  required List<String> categories,
-}) {
+List<Question> _denombrementQuestions(String exerciseId, int maxCount) {
   final questions = <Question>[];
-  for (var i = 0; i < categories.length; i++) {
-    final count = (i % maxCount) + 1;
+  for (var count = 1; count <= maxCount; count++) {
     questions.add(
       Question(
-        id: '$exerciseId-${categories[i]}',
+        id: '$exerciseId-$count',
         exerciseId: exerciseId,
-        displayValue: '$count ${categories[i]}',
+        displayValue: '$count animaux',
         expectedSpokenWord: _digitWords[count.toString()],
+        objectCount: count,
       ),
     );
   }
@@ -350,11 +346,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.ps,
       responseMode: ResponseMode.vocal,
       interactionFormat: InteractionFormat.denombrement,
-      questions: _denombrementQuestions(
-        denombrementCinqId,
-        5,
-        categories: const ['chats', 'ballons', 'étoiles'],
-      ),
+      questions: _denombrementQuestions(denombrementCinqId, 5),
     ),
     Exercise(
       id: denombrementDixId,
@@ -365,11 +357,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.ps,
       responseMode: ResponseMode.vocal,
       interactionFormat: InteractionFormat.denombrement,
-      questions: _denombrementQuestions(
-        denombrementDixId,
-        10,
-        categories: const ['tractopelles', 'chats', 'ballons'],
-      ),
+      questions: _denombrementQuestions(denombrementDixId, 10),
     ),
   ];
 }

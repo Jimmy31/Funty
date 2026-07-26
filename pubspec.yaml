@@ -75,6 +75,13 @@ flutter:
     - assets/models/vosk-model-small-fr-0.22.zip
     - assets/sounds/correct.wav
     - assets/sounds/incorrect.wav
+    - assets/images/coccinelles/
+    - assets/images/chats/
+    - assets/images/chiens/
+    - assets/images/poissons/
+    - assets/images/oiseaux/
+    - assets/images/insectes/
+    - assets/images/singes/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

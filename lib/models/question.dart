@@ -8,6 +8,7 @@ class Question {
     required this.displayValue,
     this.expectedSpokenWord,
     this.expectedAnswer,
+    this.objectCount,
   });
 
   final String id;
@@ -15,6 +16,13 @@ class Question {
 
   /// Ce qui est affiché à l'enfant (ex. "H", "7", "7 + 3").
   final String displayValue;
+
+  /// Pour le dénombrement : nombre d'objets à afficher et à compter. Null
+  /// pour les exercices sans illustration (affichage texte via
+  /// [displayValue]). La famille d'animaux et les images précises sont
+  /// tirées au hasard par l'écran d'exercice à chaque présentation de la
+  /// question, plutôt que figées ici (cf. [ExerciseRunnerScreen]).
+  final int? objectCount;
 
   /// Mot cible pour la grammaire de reconnaissance vocale fermée (cf. spike
   /// technique) — null si l'exercice n'a pas de mode vocal pour cette
