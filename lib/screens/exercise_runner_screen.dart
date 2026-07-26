@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/animal_families.dart';
+import '../data/catalog_seed.dart' show digitWords;
 import '../models/exercise.dart';
 import '../models/question.dart';
 import '../repositories/question_stats_repository.dart';
@@ -65,8 +66,12 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   int _wrongAttemptsOnCurrent = 0;
   DateTime? _questionStartedAt;
   final List<Duration> _responseTimes = [];
-  String _partialText = '';
   String? _revealedAnswer;
+
+  // Texte reconnu par la reconnaissance vocale, affiché à côté du micro
+  // pour le débogage (partiel en cours d'écoute, ou dernier résultat final
+  // reçu) — utile pour diagnostiquer les mots mal reconnus (cf. PRD 12).
+  String _recognizedDebugText = '';
   final _presentationRandom = Random();
   LetterPresentation? _presentation;
   List<int>? _tactileOptions;
@@ -77,6 +82,15 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   final _denombrementRandom = Random();
   List<String>? _denombrementImages;
   String? _lastAnimalFamily;
+
+  // Animation grenouille (exercices de calcul, cf. PRD 6.7bis) : avance
+  // d'une image sur une bonne réponse rapide (≤ 5s), recule sur une erreur
+  // ou une réponse trop lente. Débute à 0 (bas du toboggan) à chaque série
+  // et reste dans [0, _frogFrameCount - 1].
+  static const _frogFrameCount = 12;
+  static const _frogAdvanceDelay = Duration(seconds: 5);
+  int _frogFrameIndex = 0;
+  DateTime? _attemptStartedAt;
 
   // Comptage (exercice séquentiel, cf. PRD 5.1/6.2).
   static const _maxSequentialAttempts = 5;
@@ -146,10 +160,11 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     setState(() {
       _currentQuestion = next;
       _wrongAttemptsOnCurrent = 0;
-      _partialText = '';
       _revealedAnswer = null;
+      _recognizedDebugText = '';
       _status = _RunnerStatus.playing;
       _questionStartedAt = DateTime.now();
+      _attemptStartedAt = DateTime.now();
       // Présentation visuelle aléatoire pour les variantes Alphabet
       // concernées (cf. PRD 5.1/8.1) — tirée à chaque nouvelle question.
       _presentation = exercise.randomPresentation
@@ -172,7 +187,15 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
           : null;
     });
     if (exercise.responseMode.acceptsVocal && next.expectedSpokenWord != null) {
-      await _voskService.setGrammar([next.expectedSpokenWord!]);
+      // Exercices vocal + tactile (Addition/Soustraction, cf. PRD 6.2) :
+      // grammaire élargie à tous les nombres valides de la plage, pas
+      // seulement la bonne réponse — sinon Vosk ne peut transcrire que le
+      // mot attendu ou "[unk]", ce qui empêche de savoir *quel* mauvais
+      // nombre l'enfant a réellement dit (cf. bug corrigé, PRD 8.1).
+      final grammarWords = exercise.responseMode.acceptsTactile
+          ? _numericGrammarWords(exercise.maxAnswerValue ?? 20)
+          : [next.expectedSpokenWord!];
+      await _voskService.setGrammar(grammarWords);
       // Écoute automatique dès l'apparition de la question (cf. PRD 6.2) :
       // pas besoin d'appuyer sur un bouton, l'enfant peut répondre tout de
       // suite à voix haute.
@@ -180,13 +203,24 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     }
   }
 
+  /// Tous les mots-chiffres de 0 à [max] (cf. PRD 6.2, vocal + tactile) —
+  /// permet à Vosk de transcrire n'importe quel nombre dit par l'enfant
+  /// dans cette plage, pas seulement la bonne réponse.
+  List<String> _numericGrammarWords(int max) {
+    return [
+      for (var i = 0; i <= max; i++)
+        if (digitWords[i.toString()] != null) digitWords[i.toString()]!,
+    ];
+  }
+
   void _onPartial(String text) {
     if (!mounted || _status != _RunnerStatus.listening) return;
-    setState(() => _partialText = text);
+    setState(() => _recognizedDebugText = text);
   }
 
   void _onVocalResult(String text) {
     if (!mounted || text.isEmpty) return;
+    setState(() => _recognizedDebugText = text);
     if (_exercise!.isSequentialException) {
       _handleSequentialAnswer(text);
     } else {
@@ -195,10 +229,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   }
 
   Future<void> _startListening() async {
-    setState(() {
-      _status = _RunnerStatus.listening;
-      _partialText = '';
-    });
+    setState(() => _status = _RunnerStatus.listening);
     await _voskService.start();
   }
 
@@ -212,6 +243,21 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
         (spoken != null &&
             spoken.trim().toLowerCase() == question.expectedSpokenWord) ||
         (tactile != null && tactile == question.expectedAnswer);
+
+    if (_exercise!.frogAnimation) {
+      final attemptElapsed = _attemptStartedAt == null
+          ? Duration.zero
+          : DateTime.now().difference(_attemptStartedAt!);
+      final advance = correct && attemptElapsed <= _frogAdvanceDelay;
+      setState(() {
+        _frogFrameIndex = (_frogFrameIndex + (advance ? 1 : -1)).clamp(
+          0,
+          _frogFrameCount - 1,
+        );
+      });
+      _attemptStartedAt = DateTime.now();
+    }
+
     _flashAndPlay(correct: correct);
 
     if (!correct) {
@@ -222,7 +268,8 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       // ignorée et ne modifie rien tant que ce seuil n'est pas atteint.
       if (_wrongAttemptsOnCurrent >= 2) {
         await _voskService.stop();
-        final elapsed = _elapsedSinceQuestionStart() + const Duration(seconds: 5);
+        final elapsed =
+            _elapsedSinceQuestionStart() + const Duration(seconds: 5);
         _responseTimes.add(elapsed);
         await _questionStats.recordAttempt(
           widget.profileId,
@@ -232,7 +279,8 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
         );
         setState(() {
           _status = _RunnerStatus.revealed;
-          _revealedAnswer = question.expectedAnswer ?? question.expectedSpokenWord;
+          _revealedAnswer =
+              question.expectedAnswer ?? question.expectedSpokenWord;
         });
         Future.delayed(const Duration(seconds: 2), _afterQuestionAnswered);
       }
@@ -306,7 +354,6 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     final question = questions[_sequentialIndex];
     setState(() {
       _currentQuestion = question;
-      _partialText = '';
       _revealedAnswer = null;
       _status = _RunnerStatus.playing;
     });
@@ -437,7 +484,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       displayValue,
       textAlign: TextAlign.center,
       style: TextStyle(
-        fontSize: 90,
+        fontSize: 72,
         fontWeight: FontWeight.bold,
         fontFamily: presentation?.fontFamily,
       ),
@@ -449,21 +496,22 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   /// Tire une famille d'animaux (différente de la précédente question, cf.
   /// PRD 5.1) puis [count] images distinctes au hasard dans cette famille.
   List<String> _pickDenombrementImages(int count) {
-    var family = animalFamilyFolders[
-        _denombrementRandom.nextInt(animalFamilyFolders.length)];
+    var family =
+        animalFamilyFolders[_denombrementRandom.nextInt(
+          animalFamilyFolders.length,
+        )];
     if (animalFamilyFolders.length > 1) {
       while (family == _lastAnimalFamily) {
-        family = animalFamilyFolders[
-            _denombrementRandom.nextInt(animalFamilyFolders.length)];
+        family =
+            animalFamilyFolders[_denombrementRandom.nextInt(
+              animalFamilyFolders.length,
+            )];
       }
     }
     _lastAnimalFamily = family;
     final indices = List.generate(imagesPerAnimalFamily, (i) => i + 1)
       ..shuffle(_denombrementRandom);
-    return indices
-        .take(count)
-        .map((i) => animalImagePath(family, i))
-        .toList();
+    return indices.take(count).map((i) => animalImagePath(family, i)).toList();
   }
 
   /// Dénombrement : les objets à compter, en images plutôt qu'en texte (cf.
@@ -471,11 +519,11 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   Widget _buildObjectImages(List<String> assets) {
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 12,
-      runSpacing: 12,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         for (final asset in assets)
-          Image.asset(asset, width: 90, height: 90, fit: BoxFit.contain),
+          Image.asset(asset, width: 72, height: 72, fit: BoxFit.contain),
       ],
     );
   }
@@ -512,6 +560,18 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     );
   }
 
+  /// Grenouille qui progresse le long du toboggan au fil de la série (cf.
+  /// PRD 6.7bis) — une image sur 12, avance/recule selon la réponse.
+  Widget _buildFrogAnimation() {
+    final n = (_frogFrameIndex + 1).toString().padLeft(2, '0');
+    return Center(
+      child: Image.asset(
+        'assets/images/grenouille/grenouille_$n.png',
+        height: 100,
+      ),
+    );
+  }
+
   Widget _buildQuestion() {
     final exercise = _exercise!;
     final question = _currentQuestion!;
@@ -524,20 +584,16 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildProgressIndicator(),
-          const SizedBox(height: 16),
-          // Consigne orale systématique (cf. PRD 6.2) : texte pour
-          // l'instant, pas encore le vrai enregistrement audio.
-          Text(
-            exercise.oralInstruction,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 24),
+          if (exercise.frogAnimation) ...[
+            const SizedBox(height: 8),
+            _buildFrogAnimation(),
+          ],
+          const SizedBox(height: 8),
           if (_denombrementImages != null)
             _buildObjectImages(_denombrementImages!)
           else
             _buildLetterDisplay(question.displayValue),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           if (revealed)
             Text(
               'La bonne réponse était : "$_revealedAnswer"',
@@ -545,33 +601,40 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
               style: const TextStyle(fontSize: 18, color: Colors.orange),
             )
           else ...[
-            // Écoute automatique (cf. PRD 6.2) : simple indicateur passif,
-            // pas de bouton à presser pour déclencher la reconnaissance.
+            // Écoute automatique (cf. PRD 6.2) : indicateur passif (icône
+            // micro, couleur selon l'état) sans texte ni bouton. Texte
+            // reconnu affiché à côté pour le débogage (cf. PRD 12).
             if (exercise.responseMode.acceptsVocal) ...[
-              Icon(
-                Icons.mic,
-                size: 48,
-                color: listening
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                listening ? 'Je t\'écoute...' : 'Préparation du micro...',
-                textAlign: TextAlign.center,
-              ),
-              if (listening)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    'En cours : "$_partialText"',
-                    textAlign: TextAlign.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.mic,
+                    size: 40,
+                    color: listening
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey,
                   ),
-                ),
+                  if (_recognizedDebugText.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '"$_recognizedDebugText"',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
             if (exercise.responseMode.acceptsTactile &&
                 _tactileOptions != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _TactileOptions(
                 options: _tactileOptions!,
                 onAnswer: _handleTactileAnswer,
@@ -627,25 +690,42 @@ class _TactileOptions extends StatelessWidget {
   final List<int> options;
   final ValueChanged<String> onAnswer;
 
+  static const _perRow = 4;
+
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        for (final option in options)
-          OutlinedButton(
-            onPressed: () => onAnswer(option.toString()),
-            child: Text('$option', style: const TextStyle(fontSize: 20)),
+        for (var i = 0; i < options.length; i += _perRow) ...[
+          if (i > 0) const SizedBox(height: 8),
+          Row(
+            children: [
+              for (final option in options.skip(i).take(_perRow))
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: OutlinedButton(
+                      onPressed: () => onAnswer(option.toString()),
+                      child: FittedBox(
+                        child: Text(
+                          '$option',
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
+        ],
       ],
     );
   }
 
-  /// 5 à 8 propositions au total, groupées autour de [correct], sans
-  /// jamais dépasser [maxValue] ni descendre sous 0 (cf. PRD 6.2). Peut
-  /// renvoyer moins de 5 si l'exercice n'offre pas assez de valeurs valides
+  /// 8 propositions au total (2 lignes de 4), groupées autour de [correct],
+  /// sans jamais dépasser [maxValue] ni descendre sous 0 (cf. PRD 6.2). Peut
+  /// renvoyer moins de 8 si l'exercice n'offre pas assez de valeurs valides
   /// à proximité (ex. correct = maxValue).
   static List<int> buildOptions(int correct, int? maxValue, Random random) {
     final nearby = <int>[];
@@ -657,7 +737,7 @@ class _TactileOptions extends StatelessWidget {
       }
     }
 
-    final targetTotal = 5 + random.nextInt(4); // 5 à 8 propositions
+    const targetTotal = 8; // 2 lignes de 4 (cf. PRD 6.2)
     final distractorCount = (targetTotal - 1).clamp(0, nearby.length);
     final distractors = nearby.take(distractorCount).toList();
 

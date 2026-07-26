@@ -82,6 +82,7 @@ flutter:
     - assets/images/oiseaux/
     - assets/images/insectes/
     - assets/images/singes/
+    - assets/images/grenouille/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

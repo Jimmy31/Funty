@@ -23,6 +23,7 @@ class Exercise {
     this.goldThreshold = const Duration(seconds: 2),
     this.isSequentialException = false,
     this.randomPresentation = false,
+    this.frogAnimation = false,
     this.maxAnswerValue,
     this.questions = const [],
   });
@@ -62,6 +63,13 @@ class Exercise {
   /// présentation visuelle de la lettre change.
   final bool randomPresentation;
 
+  /// Vrai pour les exercices de calcul (Addition, Soustraction, cf. PRD
+  /// 6.7bis) : une grenouille progresse le long d'un toboggan de piscine
+  /// (12 images) au fil de la série — avance d'une image sur une bonne
+  /// réponse rapide (≤ 5s), recule d'une image sur une erreur ou une
+  /// réponse trop lente. Distinct du badge de fin de série (cf. 6.7).
+  final bool frogAnimation;
+
   /// Borne supérieure des propositions QCM (cf. PRD 6.2) : pour les
   /// exercices Addition ≤5/≤10/≤20, aucune proposition ne doit dépasser ce
   /// plafond. `null` = pas de plafond (ex. Soustraction).
@@ -92,6 +100,7 @@ class Exercise {
       goldThreshold: goldThreshold ?? this.goldThreshold,
       isSequentialException: isSequentialException,
       randomPresentation: randomPresentation,
+      frogAnimation: frogAnimation,
       maxAnswerValue: maxAnswerValue,
       questions: questions,
     );

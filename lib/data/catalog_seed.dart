@@ -13,7 +13,7 @@ import '../models/subject.dart';
 /// l'appareil — à vérifier comme H/M/N/X/Z l'ont été, notamment les
 /// nombres composés ("dix-sept", "dix-huit", "dix-neuf") dont la
 /// reconnaissance en un seul mot n'est pas garantie par le modèle Vosk.
-const Map<String, String> _digitWords = {
+const Map<String, String> digitWords = {
   '0': 'zéro',
   '1': 'un',
   '2': 'deux',
@@ -85,7 +85,7 @@ List<Question> _letterQuestions(String exerciseId, {required bool lowercase}) {
 }
 
 List<Question> _digitQuestions(String exerciseId) {
-  return _digitWords.entries
+  return digitWords.entries
       .where((e) => int.parse(e.key) <= 9) // exercice "Nombres" = 0 à 9
       .map(
         (e) => Question(
@@ -109,7 +109,7 @@ List<Question> _additionQuestions(
       id: '$exerciseId-$a-$b',
       exerciseId: exerciseId,
       displayValue: '$a + $b',
-      expectedSpokenWord: _digitWords[sum.toString()],
+      expectedSpokenWord: digitWords[sum.toString()],
       expectedAnswer: sum.toString(),
     );
   }).toList();
@@ -126,7 +126,7 @@ List<Question> _subtractionQuestions(
       id: '$exerciseId-$a-$b',
       exerciseId: exerciseId,
       displayValue: '$a - $b',
-      expectedSpokenWord: _digitWords[diff.toString()],
+      expectedSpokenWord: digitWords[diff.toString()],
       expectedAnswer: diff.toString(),
     );
   }).toList();
@@ -154,7 +154,7 @@ List<Question> _countingQuestions(String exerciseId) {
       id: '$exerciseId-$n',
       exerciseId: exerciseId,
       displayValue: '$n',
-      expectedSpokenWord: _digitWords[n.toString()],
+      expectedSpokenWord: digitWords[n.toString()],
     );
   });
 }
@@ -167,7 +167,7 @@ List<Question> _denombrementQuestions(String exerciseId, int maxCount) {
         id: '$exerciseId-$count',
         exerciseId: exerciseId,
         displayValue: '$count animaux',
-        expectedSpokenWord: _digitWords[count.toString()],
+        expectedSpokenWord: digitWords[count.toString()],
         objectCount: count,
       ),
     );
@@ -254,6 +254,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.gs,
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
+      frogAnimation: true,
       maxAnswerValue: 5,
       questions: _additionQuestions(additionCinqId, const [
         (1, 1),
@@ -272,6 +273,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.gs,
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
+      frogAnimation: true,
       maxAnswerValue: 10,
       questions: _additionQuestions(additionDixId, const [
         (4, 3),
@@ -290,6 +292,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.cp,
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
+      frogAnimation: true,
       maxAnswerValue: 20,
       questions: _additionQuestions(additionVingtId, const [
         (8, 5),
@@ -308,6 +311,7 @@ List<Exercise> buildCatalogSeed() {
       schoolGrade: SchoolGrade.gs,
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
+      frogAnimation: true,
       questions: _subtractionQuestions(soustractionDixId, const [
         (8, 3),
         (10, 4),
