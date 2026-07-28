@@ -98,38 +98,68 @@ List<Question> _digitQuestions(String exerciseId) {
       .toList();
 }
 
-List<Question> _additionQuestions(
-  String exerciseId,
-  List<(int, int)> pairs,
-) {
-  return pairs.map((pair) {
-    final (a, b) = pair;
-    final sum = a + b;
-    return Question(
-      id: '$exerciseId-$a-$b',
-      exerciseId: exerciseId,
-      displayValue: '$a + $b',
-      expectedSpokenWord: digitWords[sum.toString()],
-      expectedAnswer: sum.toString(),
-    );
-  }).toList();
+/// Nombre de paires proposées par résultat possible. Assez pour que le même
+/// résultat ne soit pas toujours associé à la même écriture, sans faire
+/// exploser la banque de questions (la sélection adaptative privilégiant
+/// les questions jamais vues, cf. PRD 6.5).
+const _pairsPerResult = 3;
+
+/// Additions couvrant **tous** les résultats de 0 à [maxSum] (cf. PRD 5.1).
+/// Les listes de paires figées utilisées auparavant ne couvraient qu'une
+/// poignée de résultats — Addition ≤ 20 ne proposait par exemple que des
+/// résultats compris entre 13 et 20.
+///
+/// Les paires les plus équilibrées viennent en premier (5 + 5 avant 9 + 1),
+/// et les écritures triviales "n + 0" sont écartées tant qu'il existe une
+/// autre façon d'atteindre le même résultat.
+List<Question> _additionQuestions(String exerciseId, int maxSum) {
+  final questions = <Question>[];
+  for (var sum = 0; sum <= maxSum; sum++) {
+    var kept = 0;
+    for (var a = (sum + 1) ~/ 2; a <= sum && kept < _pairsPerResult; a++) {
+      final b = sum - a;
+      if (b == 0 && sum >= 2) continue;
+      questions.add(
+        Question(
+          id: '$exerciseId-$a-$b',
+          exerciseId: exerciseId,
+          displayValue: '$a + $b',
+          expectedSpokenWord: digitWords[sum.toString()],
+          expectedAnswer: sum.toString(),
+        ),
+      );
+      kept++;
+    }
+  }
+  return questions;
 }
 
-List<Question> _subtractionQuestions(
-  String exerciseId,
-  List<(int, int)> pairs,
-) {
-  return pairs.map((pair) {
-    final (a, b) = pair;
-    final diff = a - b;
-    return Question(
-      id: '$exerciseId-$a-$b',
-      exerciseId: exerciseId,
-      displayValue: '$a - $b',
-      expectedSpokenWord: digitWords[diff.toString()],
-      expectedAnswer: diff.toString(),
-    );
-  }).toList();
+/// Soustractions couvrant tous les résultats de 1 à [maxValue], le second
+/// terme restant toujours inférieur au premier et les deux termes bornés
+/// par [maxValue] (cf. PRD 5.1) — même correction de couverture que pour
+/// [_additionQuestions].
+List<Question> _subtractionQuestions(String exerciseId, int maxValue) {
+  final questions = <Question>[];
+  for (var diff = 1; diff <= maxValue; diff++) {
+    var kept = 0;
+    for (var b = 0; diff + b <= maxValue && kept < _pairsPerResult; b++) {
+      // "n - 0" seulement quand aucune autre écriture ne tient dans la borne
+      // (cas du résultat maximal, ex. 10 - 0 pour l'exercice ≤ 10).
+      if (b == 0 && diff + 1 <= maxValue) continue;
+      final a = diff + b;
+      questions.add(
+        Question(
+          id: '$exerciseId-$a-$b',
+          exerciseId: exerciseId,
+          displayValue: '$a - $b',
+          expectedSpokenWord: digitWords[diff.toString()],
+          expectedAnswer: diff.toString(),
+        ),
+      );
+      kept++;
+    }
+  }
+  return questions;
 }
 
 List<Question> _shapeQuestions(String exerciseId) {
@@ -256,13 +286,7 @@ List<Exercise> buildCatalogSeed() {
       interactionFormat: InteractionFormat.qcm,
       frogAnimation: true,
       maxAnswerValue: 5,
-      questions: _additionQuestions(additionCinqId, const [
-        (1, 1),
-        (2, 1),
-        (2, 2),
-        (3, 1),
-        (3, 2),
-      ]),
+      questions: _additionQuestions(additionCinqId, 5),
     ),
     Exercise(
       id: additionDixId,
@@ -275,13 +299,7 @@ List<Exercise> buildCatalogSeed() {
       interactionFormat: InteractionFormat.qcm,
       frogAnimation: true,
       maxAnswerValue: 10,
-      questions: _additionQuestions(additionDixId, const [
-        (4, 3),
-        (5, 3),
-        (6, 2),
-        (7, 2),
-        (4, 6),
-      ]),
+      questions: _additionQuestions(additionDixId, 10),
     ),
     Exercise(
       id: additionVingtId,
@@ -294,13 +312,7 @@ List<Exercise> buildCatalogSeed() {
       interactionFormat: InteractionFormat.qcm,
       frogAnimation: true,
       maxAnswerValue: 20,
-      questions: _additionQuestions(additionVingtId, const [
-        (8, 5),
-        (9, 7),
-        (12, 6),
-        (13, 4),
-        (11, 9),
-      ]),
+      questions: _additionQuestions(additionVingtId, 20),
     ),
     Exercise(
       id: soustractionDixId,
@@ -312,13 +324,8 @@ List<Exercise> buildCatalogSeed() {
       responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.qcm,
       frogAnimation: true,
-      questions: _subtractionQuestions(soustractionDixId, const [
-        (8, 3),
-        (10, 4),
-        (6, 2),
-        (9, 5),
-        (7, 3),
-      ]),
+      maxAnswerValue: 10,
+      questions: _subtractionQuestions(soustractionDixId, 10),
     ),
     Exercise(
       id: formesId,

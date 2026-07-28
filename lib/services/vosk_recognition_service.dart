@@ -16,27 +16,57 @@ class VoskRecognitionService {
   Model? _model;
   Recognizer? _recognizer;
   SpeechService? _speechService;
+  bool _disposed = false;
 
   bool get isReady => _speechService != null;
 
   /// Charge le modèle et initialise le service d'écoute. À appeler une seule
   /// fois avant [setGrammar]/[start]. Prend quelques secondes la première
   /// fois (extraction du zip).
+  ///
+  /// [dispose] peut survenir pendant ce chargement (l'enfant ressort de
+  /// l'exercice avant la fin) : on relâche alors immédiatement ce qui vient
+  /// d'être créé, au lieu de laisser un service d'écoute orphelin tourner
+  /// derrière le plugin — qui est un singleton et serait réutilisé tel quel
+  /// par l'exercice suivant.
   Future<void> initialize() async {
     final modelPath = await _modelLoader.loadFromAssets(_modelAsset);
-    _model = await _vosk.createModel(modelPath);
-    _recognizer = await _vosk.createRecognizer(
-      model: _model!,
+    if (_disposed) return;
+    final model = await _vosk.createModel(modelPath);
+    if (_disposed) {
+      model.dispose();
+      return;
+    }
+    final recognizer = await _vosk.createRecognizer(
+      model: model,
       sampleRate: _sampleRate,
       grammar: const ['[unk]'],
     );
-    _speechService = await _vosk.initSpeechService(_recognizer!);
+    if (_disposed) {
+      await recognizer.dispose();
+      model.dispose();
+      return;
+    }
+    final speechService = await _vosk.initSpeechService(recognizer);
+    if (_disposed) {
+      await speechService.dispose();
+      await recognizer.dispose();
+      model.dispose();
+      return;
+    }
+    _model = model;
+    _recognizer = recognizer;
+    _speechService = speechService;
   }
 
   /// Restreint la reconnaissance aux mots donnés (+ le "[unk]" de secours,
   /// convention Vosk pour "hors grammaire"). À appeler avant chaque question,
   /// avec le seul mot attendu pour cette question précise.
   Future<void> setGrammar(List<String> words) async {
+    // Silencieux si le service a déjà été libéré : la grammaire peut être
+    // redemandée par une transition de question encore en vol au moment où
+    // l'écran se ferme.
+    if (_disposed) return;
     if (_recognizer == null) {
       throw StateError('VoskRecognitionService.initialize() non appelé.');
     }
@@ -47,7 +77,9 @@ class VoskRecognitionService {
     if (_speechService == null) {
       throw StateError('VoskRecognitionService.initialize() non appelé.');
     }
-    return _speechService!.onPartial().map((json) => _extractText(json, 'partial'));
+    return _speechService!.onPartial().map(
+      (json) => _extractText(json, 'partial'),
+    );
   }
 
   Stream<String> finalResults() {
@@ -58,6 +90,7 @@ class VoskRecognitionService {
   }
 
   Future<void> start() async {
+    if (_disposed) return;
     await _speechService?.start();
   }
 
@@ -66,6 +99,7 @@ class VoskRecognitionService {
   }
 
   Future<void> dispose() async {
+    _disposed = true;
     await _speechService?.dispose();
     await _recognizer?.dispose();
     _model?.dispose();
