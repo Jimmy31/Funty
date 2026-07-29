@@ -29,10 +29,7 @@ class AdaptiveQuestionSelector implements QuestionSelector {
     }
     if (allQuestions.length == 1) return allQuestions.first;
 
-    final answeredIds = await _stats.answeredQuestionIds(
-      profileId,
-      exerciseId,
-    );
+    final answeredIds = await _stats.answeredQuestionIds(profileId, exerciseId);
     final unseen = allQuestions
         .where((q) => !answeredIds.contains(q.id))
         .toList();

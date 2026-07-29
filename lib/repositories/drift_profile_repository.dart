@@ -55,9 +55,7 @@ class DriftProfileRepository implements ProfileRepository {
     required String name,
     required String avatarId,
   }) async {
-    await (_db.update(
-      _db.profiles,
-    )..where((t) => t.id.equals(id))).write(
+    await (_db.update(_db.profiles)..where((t) => t.id.equals(id))).write(
       ProfilesCompanion(name: Value(name), avatarId: Value(avatarId)),
     );
   }

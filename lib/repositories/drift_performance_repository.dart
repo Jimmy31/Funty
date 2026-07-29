@@ -10,9 +10,7 @@ class DriftPerformanceRepository implements PerformanceRepository {
   final AppDatabase _db;
 
   @override
-  Future<List<ExercisePerformanceStub>> getForProfile(
-    String profileId,
-  ) async {
+  Future<List<ExercisePerformanceStub>> getForProfile(String profileId) async {
     final rows = await (_db.select(
       _db.performances,
     )..where((t) => t.profileId.equals(profileId))).get();
@@ -24,10 +22,13 @@ class DriftPerformanceRepository implements PerformanceRepository {
     String profileId,
     String exerciseId,
   ) async {
-    final row = await (_db.select(_db.performances)..where(
-          (t) => t.profileId.equals(profileId) & t.exerciseId.equals(exerciseId),
-        ))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.performances)..where(
+              (t) =>
+                  t.profileId.equals(profileId) &
+                  t.exerciseId.equals(exerciseId),
+            ))
+            .getSingleOrNull();
     return row == null ? null : _toModel(row);
   }
 

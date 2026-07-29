@@ -192,9 +192,8 @@ class _ProfileSectionState extends State<_ProfileSection> {
                 IconButton(
                   tooltip: 'Curer les exercices',
                   icon: const Icon(Icons.tune),
-                  onPressed: () => context.push(
-                    '/profiles/${widget.profile.id}/catalog',
-                  ),
+                  onPressed: () =>
+                      context.push('/profiles/${widget.profile.id}/catalog'),
                 ),
                 IconButton(
                   tooltip: 'Modifier le profil',
@@ -227,7 +226,9 @@ class _ProfileSectionState extends State<_ProfileSection> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              catalogStore.byId(performance.exerciseId)?.title ??
+                              catalogStore
+                                      .byId(performance.exerciseId)
+                                      ?.title ??
                                   performance.exerciseId,
                             ),
                           ),
@@ -279,11 +280,16 @@ class _QuestionDifficultyHint extends StatelessWidget {
 
         final sorted = data.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
-        final hardestLabels = sorted.take(2).map((entry) {
-          final matches = exercise.questions.where((q) => q.id == entry.key);
-          final question = matches.isEmpty ? null : matches.first;
-          return question?.displayValue ?? entry.key;
-        }).join(', ');
+        final hardestLabels = sorted
+            .take(2)
+            .map((entry) {
+              final matches = exercise.questions.where(
+                (q) => q.id == entry.key,
+              );
+              final question = matches.isEmpty ? null : matches.first;
+              return question?.displayValue ?? entry.key;
+            })
+            .join(', ');
 
         return Padding(
           padding: const EdgeInsets.only(left: 30, top: 2),

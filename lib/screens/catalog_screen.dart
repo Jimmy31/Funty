@@ -78,10 +78,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         actions: [
           TextButton(
             onPressed: () => _onDone(context),
-            child: const Text(
-              'Terminé',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Terminé', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -116,10 +113,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       ),
                     Switch(
                       value: store.isActive(widget.profileId, exercise.id),
-                      onChanged: (_) => store.toggleActive(
-                        widget.profileId,
-                        exercise.id,
-                      ),
+                      onChanged: (_) =>
+                          store.toggleActive(widget.profileId, exercise.id),
                     ),
                   ],
                 ),
@@ -226,7 +221,8 @@ class _ExerciseSettingsDialogState extends State<_ExerciseSettingsDialog> {
 
   /// Un palier n'a de sens que si or <= argent <= bronze (exigences
   /// croissantes, cf. PRD 6.7).
-  bool get _isValid => _goldSeconds <= _silverSeconds && _silverSeconds <= _bronzeSeconds;
+  bool get _isValid =>
+      _goldSeconds <= _silverSeconds && _silverSeconds <= _bronzeSeconds;
 
   @override
   Widget build(BuildContext context) {

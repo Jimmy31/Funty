@@ -30,8 +30,7 @@ class FuntyApp extends StatelessWidget {
           create: (_) => CatalogStore(DriftCatalogRepository(database)),
         ),
         ChangeNotifierProvider(
-          create: (_) =>
-              PerformanceStore(DriftPerformanceRepository(database)),
+          create: (_) => PerformanceStore(DriftPerformanceRepository(database)),
         ),
         Provider<QuestionStatsRepository>(
           create: (_) => DriftQuestionStatsRepository(database),
@@ -42,7 +41,10 @@ class FuntyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         title: 'Funty',
-        theme: ThemeData(colorSchemeSeed: Colors.deepPurple, useMaterial3: true),
+        theme: ThemeData(
+          colorSchemeSeed: Colors.deepPurple,
+          useMaterial3: true,
+        ),
         routerConfig: appRouter,
       ),
     );

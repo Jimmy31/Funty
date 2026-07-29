@@ -65,8 +65,7 @@ class _CreateProfileDialogState extends State<CreateProfileDialog> {
                   ChoiceChip(
                     label: Text(avatar, style: const TextStyle(fontSize: 20)),
                     selected: _selectedAvatar == avatar,
-                    onSelected: (_) =>
-                        setState(() => _selectedAvatar = avatar),
+                    onSelected: (_) => setState(() => _selectedAvatar = avatar),
                   ),
               ],
             ),

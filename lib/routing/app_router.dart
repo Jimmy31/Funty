@@ -13,18 +13,19 @@ import '../screens/profile_selection_screen.dart';
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(path: '/', builder: (context, state) => const ProfileSelectionScreen()),
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const ProfileSelectionScreen(),
+    ),
     GoRoute(
       path: '/profiles/:profileId/catalog',
-      builder: (context, state) => CatalogScreen(
-        profileId: state.pathParameters['profileId']!,
-      ),
+      builder: (context, state) =>
+          CatalogScreen(profileId: state.pathParameters['profileId']!),
     ),
     GoRoute(
       path: '/profiles/:profileId/home',
-      builder: (context, state) => ChildHomeScreen(
-        profileId: state.pathParameters['profileId']!,
-      ),
+      builder: (context, state) =>
+          ChildHomeScreen(profileId: state.pathParameters['profileId']!),
     ),
     GoRoute(
       path: '/profiles/:profileId/exercise/:exerciseId',

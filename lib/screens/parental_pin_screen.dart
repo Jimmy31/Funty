@@ -122,9 +122,7 @@ class _NumericPad extends StatelessWidget {
         for (final row in rows)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (final digit in row) _PadButton(digit, onDigit),
-            ],
+            children: [for (final digit in row) _PadButton(digit, onDigit)],
           ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,

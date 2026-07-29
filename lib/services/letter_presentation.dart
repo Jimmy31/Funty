@@ -30,10 +30,14 @@ class LetterPresentation {
 /// PRD 5.1 : orientation/police/taille aléatoires pour les variantes
 /// "aléatoires" de l'Alphabet).
 LetterPresentation randomLetterPresentation(String letter, Random random) {
-  final fontFamily = presentationFonts[random.nextInt(presentationFonts.length)];
+  final fontFamily =
+      presentationFonts[random.nextInt(presentationFonts.length)];
   final maxDegrees = _confusableLetters.contains(letter.toLowerCase())
       ? _confusableRotationMaxDegrees
       : _freeRotationMaxDegrees;
   final degrees = (random.nextDouble() * 2 - 1) * maxDegrees;
-  return LetterPresentation(fontFamily: fontFamily, rotation: degrees * pi / 180);
+  return LetterPresentation(
+    fontFamily: fontFamily,
+    rotation: degrees * pi / 180,
+  );
 }

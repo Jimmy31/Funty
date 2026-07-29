@@ -72,7 +72,8 @@ class DriftCatalogRepository implements CatalogRepository {
           );
     } else {
       await (_db.delete(_db.activations)..where(
-            (t) => t.profileId.equals(profileId) & t.exerciseId.equals(exerciseId),
+            (t) =>
+                t.profileId.equals(profileId) & t.exerciseId.equals(exerciseId),
           ))
           .go();
     }
