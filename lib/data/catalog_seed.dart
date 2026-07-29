@@ -37,6 +37,21 @@ const Map<String, String> digitWords = {
   '20': 'vingt',
 };
 
+/// Prononciations supplémentaires acceptées pour certains nombres, sur le
+/// même principe que les homophones de lettres validés au spike (cf.
+/// docs/PRD.md section 12) : l'enfant ne change rien à ce qu'il dit, on
+/// élargit seulement ce que le modèle a le droit de rendre.
+///
+/// Vide pour l'instant. Des variantes avaient été envisagées pour "un" (le
+/// cas remonté en test : une syllabe nasale très brève, que le modèle rate
+/// par moments au profit de "[unk]"), mais ni "hein" ni "une" ne sont
+/// retenus — un enfant qui dit "hein ?" parce qu'il n'a pas compris ne doit
+/// pas voir sa question validée comme la réponse "1". Seul "un" est accepté.
+const Map<String, List<String>> digitSpokenVariants = {};
+
+List<String> _variantsFor(String digit) =>
+    digitSpokenVariants[digit] ?? const [];
+
 /// Prononciation des lettres majuscules, avec les homophones validés par le
 /// spike pour H/M/N/X (cf. docs/PRD.md section 12) : "hache" pour "ache" (H
 /// est muet en français, même son), "aime" pour "emme" (M), "haine" pour
@@ -93,6 +108,7 @@ List<Question> _digitQuestions(String exerciseId) {
           exerciseId: exerciseId,
           displayValue: e.key,
           expectedSpokenWord: e.value,
+          spokenVariants: _variantsFor(e.key),
         ),
       )
       .toList();
@@ -125,6 +141,7 @@ List<Question> _additionQuestions(String exerciseId, int maxSum) {
           exerciseId: exerciseId,
           displayValue: '$a + $b',
           expectedSpokenWord: digitWords[sum.toString()],
+          spokenVariants: _variantsFor(sum.toString()),
           expectedAnswer: sum.toString(),
         ),
       );
@@ -153,6 +170,7 @@ List<Question> _subtractionQuestions(String exerciseId, int maxValue) {
           exerciseId: exerciseId,
           displayValue: '$a - $b',
           expectedSpokenWord: digitWords[diff.toString()],
+          spokenVariants: _variantsFor(diff.toString()),
           expectedAnswer: diff.toString(),
         ),
       );
@@ -185,6 +203,7 @@ List<Question> _countingQuestions(String exerciseId) {
       exerciseId: exerciseId,
       displayValue: '$n',
       expectedSpokenWord: digitWords[n.toString()],
+      spokenVariants: _variantsFor(n.toString()),
     );
   });
 }
@@ -198,6 +217,8 @@ List<Question> _denombrementQuestions(String exerciseId, int maxCount) {
         exerciseId: exerciseId,
         displayValue: '$count animaux',
         expectedSpokenWord: digitWords[count.toString()],
+        spokenVariants: _variantsFor(count.toString()),
+        expectedAnswer: count.toString(),
         objectCount: count,
       ),
     );
@@ -353,10 +374,11 @@ List<Exercise> buildCatalogSeed() {
       subject: Subject.mathematiques,
       theme: 'Dénombrement',
       title: 'Dénombrement (1 à 5 objets)',
-      oralInstruction: 'Compte les objets affichés et dis le total.',
+      oralInstruction: 'Compte les objets affichés et dis ou choisis le total.',
       schoolGrade: SchoolGrade.ps,
-      responseMode: ResponseMode.vocal,
+      responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.denombrement,
+      maxAnswerValue: 5,
       questions: _denombrementQuestions(denombrementCinqId, 5),
     ),
     Exercise(
@@ -364,10 +386,11 @@ List<Exercise> buildCatalogSeed() {
       subject: Subject.mathematiques,
       theme: 'Dénombrement',
       title: 'Dénombrement (1 à 10 objets)',
-      oralInstruction: 'Compte les objets affichés et dis le total.',
+      oralInstruction: 'Compte les objets affichés et dis ou choisis le total.',
       schoolGrade: SchoolGrade.ps,
-      responseMode: ResponseMode.vocal,
+      responseMode: ResponseMode.vocalEtTactile,
       interactionFormat: InteractionFormat.denombrement,
+      maxAnswerValue: 10,
       questions: _denombrementQuestions(denombrementDixId, 10),
     ),
   ];

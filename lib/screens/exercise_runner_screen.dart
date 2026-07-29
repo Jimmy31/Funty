@@ -14,6 +14,7 @@ import '../services/adaptive_question_selector.dart';
 import '../services/end_message_bank.dart';
 import '../services/feedback_sound_service.dart';
 import '../services/letter_presentation.dart';
+import '../services/object_scatter.dart';
 import '../services/question_selector.dart';
 import '../services/reward_calculator.dart';
 import '../services/vosk_recognition_service.dart';
@@ -133,8 +134,20 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   // question (cf. PRD 5.1) — jamais la même famille deux questions de
   // suite.
   final _denombrementRandom = Random();
-  List<String>? _denombrementImages;
   String? _lastAnimalFamily;
+
+  // Images de la question courante, et disposition calculée à partir d'elles.
+  // La disposition dépend du format de la zone que l'écran laisse réellement
+  // aux objets : elle ne peut donc pas être figée en même temps que le tirage
+  // des images, elle est mémoïsée à la première mise en page (cf.
+  // [_scatteredObjectsFor]). Le tirage étant rejoué avec une graine fixée par
+  // question, une reconstruction à format identique redonne exactement la
+  // même disposition — sans quoi les objets sauteraient d'un endroit à
+  // l'autre sous les yeux de l'enfant.
+  List<String>? _denombrementAssets;
+  int? _denombrementSeed;
+  List<ScatteredObject>? _scatterCache;
+  double? _scatterCacheAspect;
 
   // Animation grenouille (exercices de calcul, cf. PRD 6.7bis) : avance
   // d'une image sur une bonne réponse rapide (≤ 5s), recule sur une erreur
@@ -231,9 +244,14 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       _presentation = exercise.randomPresentation
           ? randomLetterPresentation(next.displayValue, _presentationRandom)
           : null;
-      _denombrementImages = next.objectCount != null
+      // Images tirées une seule fois par question (cf. PRD 5.1) ; leur
+      // disposition, elle, attend de connaître la place disponible.
+      _denombrementAssets = next.objectCount != null
           ? _pickDenombrementImages(next.objectCount!)
           : null;
+      _denombrementSeed = _denombrementRandom.nextInt(1 << 32);
+      _scatterCache = null;
+      _scatterCacheAspect = null;
       // Propositions QCM tirées une seule fois par question (cf. PRD 6.2) —
       // sinon elles se régénèrent à chaque reconstruction de l'écran (ex. à
       // chaque résultat partiel de l'écoute continue) et changent sans
@@ -275,7 +293,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   List<String> _exerciseGrammar(Exercise exercise) {
     final words = <String>{
       for (final question in exercise.questions)
-        if (question.expectedSpokenWord != null) question.expectedSpokenWord!,
+        ...question.acceptedSpokenWords,
     };
     final max = exercise.maxAnswerValue;
     if (max != null) words.addAll(_numericGrammarWords(max));
@@ -346,6 +364,15 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
           ? _MicState.unrecognized
           : _MicState.recognized;
     });
+  }
+
+  /// Vrai si [heard] (déjà normalisé) est l'une des prononciations qui
+  /// valident [question] — le mot cible ou l'une de ses variantes (cf.
+  /// [Question.acceptedSpokenWords]).
+  bool _matchesSpoken(Question question, String heard) {
+    return question.acceptedSpokenWords.any(
+      (word) => _normalizeSpoken(word) == heard,
+    );
   }
 
   void _onSpokenAnswer(String heard) {
@@ -424,11 +451,8 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     String? spoken,
     String? tactile,
   }) async {
-    final expectedSpoken = question.expectedSpokenWord;
     final correct =
-        (spoken != null &&
-            expectedSpoken != null &&
-            spoken == _normalizeSpoken(expectedSpoken)) ||
+        (spoken != null && _matchesSpoken(question, spoken)) ||
         (tactile != null && tactile == question.expectedAnswer);
 
     if (_exercise!.frogAnimation) {
@@ -574,8 +598,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     Question question,
     String spoken,
   ) async {
-    final expected = question.expectedSpokenWord;
-    final correct = expected != null && spoken == _normalizeSpoken(expected);
+    final correct = _matchesSpoken(question, spoken);
     _flashAndPlay(correct: correct);
 
     if (correct) {
@@ -660,7 +683,10 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            Padding(padding: const EdgeInsets.all(24), child: _buildBody()),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: _buildBody(),
+            ),
             Positioned.fill(
               child: AnswerFlashOverlay(
                 key: ValueKey(_flashToken),
@@ -740,17 +766,55 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     return indices.take(count).map((i) => animalImagePath(family, i)).toList();
   }
 
-  /// Dénombrement : les objets à compter, en images plutôt qu'en texte (cf.
-  /// PRD 5.1) — une image par objet, dans une grille qui s'adapte au nombre.
-  Widget _buildObjectImages(List<String> assets) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final asset in assets)
-          Image.asset(asset, width: 72, height: 72, fit: BoxFit.contain),
-      ],
+  /// Disposition des objets pour un cadre de rapport [aspect], mémoïsée : le
+  /// tirage est rejoué à l'identique tant que le format ne change pas, si
+  /// bien qu'une reconstruction ne déplace jamais les objets.
+  List<ScatteredObject> _scatteredObjectsFor(double aspect) {
+    if (_scatterCache != null && _scatterCacheAspect == aspect) {
+      return _scatterCache!;
+    }
+    _scatterCacheAspect = aspect;
+    _scatterCache = scatterObjects(
+      _denombrementAssets!,
+      Random(_denombrementSeed!),
+      boxAspect: aspect,
+    );
+    return _scatterCache!;
+  }
+
+  /// Dénombrement : les objets à compter, dispersés sans chevauchement avec
+  /// des tailles et des orientations variées (cf. PRD 5.1). Occupe toute la
+  /// place que l'écran lui laisse — plus la zone est haute, plus les objets
+  /// sont gros.
+  Widget _buildObjectImages() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        // Sans contrainte de hauteur (cas d'une mise en page défilante), on
+        // retombe sur le format par défaut.
+        final aspect = constraints.hasBoundedHeight
+            ? constraints.maxHeight / width
+            : defaultScatterBoxAspect;
+        return SizedBox(
+          width: width,
+          height: width * aspect,
+          child: Stack(
+            children: [
+              for (final object in _scatteredObjectsFor(aspect))
+                Positioned(
+                  left: (object.center.dx - object.size / 2) * width,
+                  top: (object.center.dy - object.size / 2) * width,
+                  width: object.size * width,
+                  height: object.size * width,
+                  child: Transform.rotate(
+                    angle: object.rotation,
+                    child: Image.asset(object.asset, fit: BoxFit.contain),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -854,6 +918,70 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
         _tactileOptions != null &&
         (!bothInputs || _inputMode == _InputMode.tactile);
 
+    final answerArea = <Widget>[
+      if (revealed)
+        Text(
+          'La bonne réponse était : "$_revealedAnswer"',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, color: Colors.orange),
+        )
+      else ...[
+        if (bothInputs) ...[
+          _buildInputModeSwitch(),
+          const SizedBox(height: 12),
+        ],
+        // Écoute automatique (cf. PRD 6.2) : indicateur passif (icône
+        // micro, couleur selon ce qui est entendu) sans bouton. Texte
+        // reconnu affiché à côté pour le débogage (cf. PRD 12).
+        if (showMic)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.mic, size: 40, color: _micColor()),
+              if (_recognizedDebugText.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '"$_recognizedDebugText"',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        if (showButtons) ...[
+          const SizedBox(height: 8),
+          _TactileOptions(
+            options: _tactileOptions!,
+            onAnswer: _handleTactileAnswer,
+          ),
+        ],
+      ],
+    ];
+
+    // Dénombrement : les objets méritent toute la place disponible, donc
+    // progression en haut, réponses ancrées en bas, et la zone de comptage
+    // prend tout ce qui reste (cf. PRD 5.1). Les autres exercices gardent la
+    // mise en page défilante, plus tolérante à un contenu haut (grenouille +
+    // 8 propositions sur un petit écran).
+    if (_denombrementAssets != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildProgressIndicator(),
+          const SizedBox(height: 8),
+          Expanded(child: _buildObjectImages()),
+          const SizedBox(height: 12),
+          ...answerArea,
+        ],
+      );
+    }
+
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -865,54 +993,9 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
             _buildFrogAnimation(),
           ],
           const SizedBox(height: 8),
-          if (_denombrementImages != null)
-            _buildObjectImages(_denombrementImages!)
-          else
-            _buildLetterDisplay(question.displayValue),
+          _buildLetterDisplay(question.displayValue),
           const SizedBox(height: 12),
-          if (revealed)
-            Text(
-              'La bonne réponse était : "$_revealedAnswer"',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, color: Colors.orange),
-            )
-          else ...[
-            if (bothInputs) ...[
-              _buildInputModeSwitch(),
-              const SizedBox(height: 12),
-            ],
-            // Écoute automatique (cf. PRD 6.2) : indicateur passif (icône
-            // micro, couleur selon ce qui est entendu) sans bouton. Texte
-            // reconnu affiché à côté pour le débogage (cf. PRD 12).
-            if (showMic)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.mic, size: 40, color: _micColor()),
-                  if (_recognizedDebugText.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        '"$_recognizedDebugText"',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            if (showButtons) ...[
-              const SizedBox(height: 8),
-              _TactileOptions(
-                options: _tactileOptions!,
-                onAnswer: _handleTactileAnswer,
-              ),
-            ],
-          ],
+          ...answerArea,
         ],
       ),
     );

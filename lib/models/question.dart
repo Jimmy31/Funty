@@ -9,6 +9,7 @@ class Question {
     this.expectedSpokenWord,
     this.expectedAnswer,
     this.objectCount,
+    this.spokenVariants,
   });
 
   final String id;
@@ -32,4 +33,18 @@ class Question {
 
   /// Réponse attendue pour la validation tactile (ex. "10" pour "7 + 3").
   final String? expectedAnswer;
+
+  /// Prononciations supplémentaires acceptées comme bonne réponse, en plus
+  /// de [expectedSpokenWord] (cf. PRD 12) : certains mots courts sont rendus
+  /// de façon instable par le modèle et méritent plusieurs formes valables.
+  /// Ne change rien à ce que l'enfant doit dire — c'est une tolérance
+  /// interne, comme les homophones de lettres.
+  final List<String>? spokenVariants;
+
+  /// Toutes les prononciations qui valident cette question. C'est aussi ce
+  /// qui alimente la grammaire fermée soumise à Vosk (cf. PRD 6.2).
+  List<String> get acceptedSpokenWords => [
+    ?expectedSpokenWord,
+    ...?spokenVariants,
+  ];
 }
