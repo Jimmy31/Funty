@@ -1049,6 +1049,20 @@ class $QuestionAttemptsTable extends QuestionAttempts
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _correctMeta = const VerificationMeta(
+    'correct',
+  );
+  @override
+  late final GeneratedColumn<bool> correct = GeneratedColumn<bool>(
+    'correct',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("correct" IN (0, 1))',
+    ),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1057,6 +1071,7 @@ class $QuestionAttemptsTable extends QuestionAttempts
     questionId,
     responseTimeMs,
     attemptedAt,
+    correct,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1119,6 +1134,12 @@ class $QuestionAttemptsTable extends QuestionAttempts
     } else if (isInserting) {
       context.missing(_attemptedAtMeta);
     }
+    if (data.containsKey('correct')) {
+      context.handle(
+        _correctMeta,
+        correct.isAcceptableOrUnknown(data['correct']!, _correctMeta),
+      );
+    }
     return context;
   }
 
@@ -1152,6 +1173,10 @@ class $QuestionAttemptsTable extends QuestionAttempts
         DriftSqlType.dateTime,
         data['${effectivePrefix}attempted_at'],
       )!,
+      correct: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}correct'],
+      ),
     );
   }
 
@@ -1169,6 +1194,13 @@ class QuestionAttemptRow extends DataClass
   final String questionId;
   final int responseTimeMs;
   final DateTime attemptedAt;
+
+  /// Tentative réussie (bonne réponse) ou non (réponse révélée après 2
+  /// échecs, cf. PRD 6.2). **Nullable pour les lignes antérieures au suivi
+  /// de la justesse** : elles ne portent qu'un temps de réponse, et les
+  /// compter d'un côté ou de l'autre fausserait le taux de réussite — elles
+  /// sont donc exclues de son calcul (cf. PRD 6.6).
+  final bool? correct;
   const QuestionAttemptRow({
     required this.id,
     required this.profileId,
@@ -1176,6 +1208,7 @@ class QuestionAttemptRow extends DataClass
     required this.questionId,
     required this.responseTimeMs,
     required this.attemptedAt,
+    this.correct,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1186,6 +1219,9 @@ class QuestionAttemptRow extends DataClass
     map['question_id'] = Variable<String>(questionId);
     map['response_time_ms'] = Variable<int>(responseTimeMs);
     map['attempted_at'] = Variable<DateTime>(attemptedAt);
+    if (!nullToAbsent || correct != null) {
+      map['correct'] = Variable<bool>(correct);
+    }
     return map;
   }
 
@@ -1197,6 +1233,9 @@ class QuestionAttemptRow extends DataClass
       questionId: Value(questionId),
       responseTimeMs: Value(responseTimeMs),
       attemptedAt: Value(attemptedAt),
+      correct: correct == null && nullToAbsent
+          ? const Value.absent()
+          : Value(correct),
     );
   }
 
@@ -1212,6 +1251,7 @@ class QuestionAttemptRow extends DataClass
       questionId: serializer.fromJson<String>(json['questionId']),
       responseTimeMs: serializer.fromJson<int>(json['responseTimeMs']),
       attemptedAt: serializer.fromJson<DateTime>(json['attemptedAt']),
+      correct: serializer.fromJson<bool?>(json['correct']),
     );
   }
   @override
@@ -1224,6 +1264,7 @@ class QuestionAttemptRow extends DataClass
       'questionId': serializer.toJson<String>(questionId),
       'responseTimeMs': serializer.toJson<int>(responseTimeMs),
       'attemptedAt': serializer.toJson<DateTime>(attemptedAt),
+      'correct': serializer.toJson<bool?>(correct),
     };
   }
 
@@ -1234,6 +1275,7 @@ class QuestionAttemptRow extends DataClass
     String? questionId,
     int? responseTimeMs,
     DateTime? attemptedAt,
+    Value<bool?> correct = const Value.absent(),
   }) => QuestionAttemptRow(
     id: id ?? this.id,
     profileId: profileId ?? this.profileId,
@@ -1241,6 +1283,7 @@ class QuestionAttemptRow extends DataClass
     questionId: questionId ?? this.questionId,
     responseTimeMs: responseTimeMs ?? this.responseTimeMs,
     attemptedAt: attemptedAt ?? this.attemptedAt,
+    correct: correct.present ? correct.value : this.correct,
   );
   QuestionAttemptRow copyWithCompanion(QuestionAttemptsCompanion data) {
     return QuestionAttemptRow(
@@ -1258,6 +1301,7 @@ class QuestionAttemptRow extends DataClass
       attemptedAt: data.attemptedAt.present
           ? data.attemptedAt.value
           : this.attemptedAt,
+      correct: data.correct.present ? data.correct.value : this.correct,
     );
   }
 
@@ -1269,7 +1313,8 @@ class QuestionAttemptRow extends DataClass
           ..write('exerciseId: $exerciseId, ')
           ..write('questionId: $questionId, ')
           ..write('responseTimeMs: $responseTimeMs, ')
-          ..write('attemptedAt: $attemptedAt')
+          ..write('attemptedAt: $attemptedAt, ')
+          ..write('correct: $correct')
           ..write(')'))
         .toString();
   }
@@ -1282,6 +1327,7 @@ class QuestionAttemptRow extends DataClass
     questionId,
     responseTimeMs,
     attemptedAt,
+    correct,
   );
   @override
   bool operator ==(Object other) =>
@@ -1292,7 +1338,8 @@ class QuestionAttemptRow extends DataClass
           other.exerciseId == this.exerciseId &&
           other.questionId == this.questionId &&
           other.responseTimeMs == this.responseTimeMs &&
-          other.attemptedAt == this.attemptedAt);
+          other.attemptedAt == this.attemptedAt &&
+          other.correct == this.correct);
 }
 
 class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
@@ -1302,6 +1349,7 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
   final Value<String> questionId;
   final Value<int> responseTimeMs;
   final Value<DateTime> attemptedAt;
+  final Value<bool?> correct;
   const QuestionAttemptsCompanion({
     this.id = const Value.absent(),
     this.profileId = const Value.absent(),
@@ -1309,6 +1357,7 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
     this.questionId = const Value.absent(),
     this.responseTimeMs = const Value.absent(),
     this.attemptedAt = const Value.absent(),
+    this.correct = const Value.absent(),
   });
   QuestionAttemptsCompanion.insert({
     this.id = const Value.absent(),
@@ -1317,6 +1366,7 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
     required String questionId,
     required int responseTimeMs,
     required DateTime attemptedAt,
+    this.correct = const Value.absent(),
   }) : profileId = Value(profileId),
        exerciseId = Value(exerciseId),
        questionId = Value(questionId),
@@ -1329,6 +1379,7 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
     Expression<String>? questionId,
     Expression<int>? responseTimeMs,
     Expression<DateTime>? attemptedAt,
+    Expression<bool>? correct,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1337,6 +1388,7 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
       if (questionId != null) 'question_id': questionId,
       if (responseTimeMs != null) 'response_time_ms': responseTimeMs,
       if (attemptedAt != null) 'attempted_at': attemptedAt,
+      if (correct != null) 'correct': correct,
     });
   }
 
@@ -1347,6 +1399,7 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
     Value<String>? questionId,
     Value<int>? responseTimeMs,
     Value<DateTime>? attemptedAt,
+    Value<bool?>? correct,
   }) {
     return QuestionAttemptsCompanion(
       id: id ?? this.id,
@@ -1355,6 +1408,7 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
       questionId: questionId ?? this.questionId,
       responseTimeMs: responseTimeMs ?? this.responseTimeMs,
       attemptedAt: attemptedAt ?? this.attemptedAt,
+      correct: correct ?? this.correct,
     );
   }
 
@@ -1379,6 +1433,9 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
     if (attemptedAt.present) {
       map['attempted_at'] = Variable<DateTime>(attemptedAt.value);
     }
+    if (correct.present) {
+      map['correct'] = Variable<bool>(correct.value);
+    }
     return map;
   }
 
@@ -1390,7 +1447,8 @@ class QuestionAttemptsCompanion extends UpdateCompanion<QuestionAttemptRow> {
           ..write('exerciseId: $exerciseId, ')
           ..write('questionId: $questionId, ')
           ..write('responseTimeMs: $responseTimeMs, ')
-          ..write('attemptedAt: $attemptedAt')
+          ..write('attemptedAt: $attemptedAt, ')
+          ..write('correct: $correct')
           ..write(')'))
         .toString();
   }
@@ -2569,6 +2627,7 @@ typedef $$QuestionAttemptsTableCreateCompanionBuilder =
       required String questionId,
       required int responseTimeMs,
       required DateTime attemptedAt,
+      Value<bool?> correct,
     });
 typedef $$QuestionAttemptsTableUpdateCompanionBuilder =
     QuestionAttemptsCompanion Function({
@@ -2578,6 +2637,7 @@ typedef $$QuestionAttemptsTableUpdateCompanionBuilder =
       Value<String> questionId,
       Value<int> responseTimeMs,
       Value<DateTime> attemptedAt,
+      Value<bool?> correct,
     });
 
 class $$QuestionAttemptsTableFilterComposer
@@ -2616,6 +2676,11 @@ class $$QuestionAttemptsTableFilterComposer
 
   ColumnFilters<DateTime> get attemptedAt => $composableBuilder(
     column: $table.attemptedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get correct => $composableBuilder(
+    column: $table.correct,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2658,6 +2723,11 @@ class $$QuestionAttemptsTableOrderingComposer
     column: $table.attemptedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get correct => $composableBuilder(
+    column: $table.correct,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$QuestionAttemptsTableAnnotationComposer
@@ -2694,6 +2764,9 @@ class $$QuestionAttemptsTableAnnotationComposer
     column: $table.attemptedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get correct =>
+      $composableBuilder(column: $table.correct, builder: (column) => column);
 }
 
 class $$QuestionAttemptsTableTableManager
@@ -2739,6 +2812,7 @@ class $$QuestionAttemptsTableTableManager
                 Value<String> questionId = const Value.absent(),
                 Value<int> responseTimeMs = const Value.absent(),
                 Value<DateTime> attemptedAt = const Value.absent(),
+                Value<bool?> correct = const Value.absent(),
               }) => QuestionAttemptsCompanion(
                 id: id,
                 profileId: profileId,
@@ -2746,6 +2820,7 @@ class $$QuestionAttemptsTableTableManager
                 questionId: questionId,
                 responseTimeMs: responseTimeMs,
                 attemptedAt: attemptedAt,
+                correct: correct,
               ),
           createCompanionCallback:
               ({
@@ -2755,6 +2830,7 @@ class $$QuestionAttemptsTableTableManager
                 required String questionId,
                 required int responseTimeMs,
                 required DateTime attemptedAt,
+                Value<bool?> correct = const Value.absent(),
               }) => QuestionAttemptsCompanion.insert(
                 id: id,
                 profileId: profileId,
@@ -2762,6 +2838,7 @@ class $$QuestionAttemptsTableTableManager
                 questionId: questionId,
                 responseTimeMs: responseTimeMs,
                 attemptedAt: attemptedAt,
+                correct: correct,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

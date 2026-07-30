@@ -45,10 +45,10 @@ class Performances extends Table {
   Set<Column> get primaryKey => {profileId, exerciseId};
 }
 
-/// Historique des temps de réponse par question (cf. PRD 6.5) : chaque
-/// tentative résolue (bonne réponse, ou révélation après 2 échecs avec sa
-/// pénalité) devient une ligne. Alimente à la fois la sélection adaptative
-/// et les futures statistiques par question du tableau de bord (PRD 6.6).
+/// Historique des tentatives par question (cf. PRD 6.5) : chaque tentative
+/// résolue (bonne réponse, ou révélation après 2 échecs avec sa pénalité)
+/// devient une ligne. Alimente à la fois la sélection adaptative et les
+/// statistiques par question du tableau de bord (PRD 6.6).
 @DataClassName('QuestionAttemptRow')
 class QuestionAttempts extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -57,6 +57,13 @@ class QuestionAttempts extends Table {
   TextColumn get questionId => text()();
   IntColumn get responseTimeMs => integer()();
   DateTimeColumn get attemptedAt => dateTime()();
+
+  /// Tentative réussie (bonne réponse) ou non (réponse révélée après 2
+  /// échecs, cf. PRD 6.2). **Nullable pour les lignes antérieures au suivi
+  /// de la justesse** : elles ne portent qu'un temps de réponse, et les
+  /// compter d'un côté ou de l'autre fausserait le taux de réussite — elles
+  /// sont donc exclues de son calcul (cf. PRD 6.6).
+  BoolColumn get correct => boolean().nullable()();
 }
 
 /// Réglages parentaux propres à un exercice (cf. PRD 6.6/6.7) : nombre de
@@ -101,7 +108,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -115,6 +122,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.createTable(appSettings);
+      }
+      if (from < 5) {
+        await m.addColumn(questionAttempts, questionAttempts.correct);
       }
     },
   );

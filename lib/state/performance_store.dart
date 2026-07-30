@@ -31,4 +31,12 @@ class PerformanceStore extends ChangeNotifier {
     _cache[profileId] = await _repository.getForProfile(profileId);
     notifyListeners();
   }
+
+  /// Remet à zéro l'agrégat de cet exercice (cf. PRD 6.6). L'historique par
+  /// question est effacé séparément, via [QuestionStatsRepository].
+  Future<void> reset(String profileId, String exerciseId) async {
+    await _repository.reset(profileId, exerciseId);
+    _cache[profileId] = await _repository.getForProfile(profileId);
+    notifyListeners();
+  }
 }

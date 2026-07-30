@@ -13,8 +13,9 @@ class DriftQuestionStatsRepository implements QuestionStatsRepository {
     String profileId,
     String exerciseId,
     String questionId,
-    Duration responseTime,
-  ) async {
+    Duration responseTime, {
+    required bool correct,
+  }) async {
     await _db
         .into(_db.questionAttempts)
         .insert(
@@ -24,6 +25,7 @@ class DriftQuestionStatsRepository implements QuestionStatsRepository {
             questionId: questionId,
             responseTimeMs: responseTime.inMilliseconds,
             attemptedAt: DateTime.now(),
+            correct: Value(correct),
           ),
         );
   }
@@ -87,5 +89,51 @@ class DriftQuestionStatsRepository implements QuestionStatsRepository {
           milliseconds: (row.read(avgExpr) ?? 0).round(),
         ),
     };
+  }
+
+  @override
+  Future<Map<String, QuestionTiming>> recentTimingByQuestion(
+    String profileId,
+    String exerciseId, {
+    required Duration bronzeThreshold,
+    int sampleSize = 5,
+  }) async {
+    // "Les N dernières par question" se dirait en SQL avec une fonction de
+    // fenêtrage ; le regroupement est fait en Dart, bien plus lisible et sans
+    // coût réel ici (l'historique d'un enfant sur un exercice reste petit).
+    // Les lignes antérieures au suivi de la justesse (`correct` nul) sont
+    // écartées : sans savoir si la tentative était juste, on ne peut pas
+    // décider si son temps compte tel quel ou s'il faut lui substituer la
+    // pénalité d'échec.
+    final query = _db.select(_db.questionAttempts)
+      ..where(
+        (t) =>
+            t.profileId.equals(profileId) &
+            t.exerciseId.equals(exerciseId) &
+            t.correct.isNotNull(),
+      )
+      ..orderBy([(t) => OrderingTerm.desc(t.attemptedAt)]);
+    final rows = await query.get();
+
+    return aggregateRecentTimings(
+      rows.map(
+        (row) => AttemptRecord(
+          questionId: row.questionId,
+          responseTime: Duration(milliseconds: row.responseTimeMs),
+          correct: row.correct ?? false,
+        ),
+      ),
+      bronzeThreshold: bronzeThreshold,
+      sampleSize: sampleSize,
+    );
+  }
+
+  @override
+  Future<void> resetExercise(String profileId, String exerciseId) async {
+    await (_db.delete(_db.questionAttempts)..where(
+          (t) =>
+              t.profileId.equals(profileId) & t.exerciseId.equals(exerciseId),
+        ))
+        .go();
   }
 }

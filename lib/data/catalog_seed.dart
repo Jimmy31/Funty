@@ -114,16 +114,24 @@ List<Question> _digitQuestions(String exerciseId) {
       .toList();
 }
 
-/// Nombre de paires proposées par résultat possible. Assez pour que le même
-/// résultat ne soit pas toujours associé à la même écriture, sans faire
-/// exploser la banque de questions (la sélection adaptative privilégiant
-/// les questions jamais vues, cf. PRD 6.5).
+/// Nombre de paires distinctes proposées par résultat possible — sans
+/// compter l'ordre des termes, chacune donnant deux questions (cf.
+/// [_additionQuestions]). Assez pour que le même résultat ne soit pas
+/// toujours associé à la même écriture, sans faire exploser la banque de
+/// questions (la sélection adaptative privilégiant les questions jamais
+/// vues, cf. PRD 6.5).
 const _pairsPerResult = 3;
 
 /// Additions couvrant **tous** les résultats de 0 à [maxSum] (cf. PRD 5.1).
 /// Les listes de paires figées utilisées auparavant ne couvraient qu'une
 /// poignée de résultats — Addition ≤ 20 ne proposait par exemple que des
 /// résultats compris entre 13 et 20.
+///
+/// Chaque paire est posée **dans les deux ordres**, comme deux questions
+/// distinctes : 7 + 11 et 11 + 7 reviennent au même pour un adulte, pas pour
+/// un enfant qui apprend — la commutativité est justement une des choses à
+/// acquérir. Seule une paire de termes égaux (3 + 3) ne donne qu'une
+/// question.
 ///
 /// Les paires les plus équilibrées viennent en premier (5 + 5 avant 9 + 1),
 /// et les écritures triviales "n + 0" sont écartées tant qu'il existe une
@@ -135,17 +143,20 @@ List<Question> _additionQuestions(String exerciseId, int maxSum) {
     for (var a = (sum + 1) ~/ 2; a <= sum && kept < _pairsPerResult; a++) {
       final b = sum - a;
       if (b == 0 && sum >= 2) continue;
-      questions.add(
-        Question(
-          id: '$exerciseId-$a-$b',
-          exerciseId: exerciseId,
-          displayValue: '$a + $b',
-          expectedSpokenWord: digitWords[sum.toString()],
-          spokenVariants: _variantsFor(sum.toString()),
-          expectedAnswer: sum.toString(),
-        ),
-      );
       kept++;
+      final orders = a == b ? [(a, b)] : [(a, b), (b, a)];
+      for (final (first, second) in orders) {
+        questions.add(
+          Question(
+            id: '$exerciseId-$first-$second',
+            exerciseId: exerciseId,
+            displayValue: '$first + $second',
+            expectedSpokenWord: digitWords[sum.toString()],
+            spokenVariants: _variantsFor(sum.toString()),
+            expectedAnswer: sum.toString(),
+          ),
+        );
+      }
     }
   }
   return questions;

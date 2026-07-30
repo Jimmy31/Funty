@@ -69,6 +69,26 @@ class DriftPerformanceRepository implements PerformanceRepository {
         );
   }
 
+  @override
+  Future<void> reset(String profileId, String exerciseId) async {
+    // La ligne est remise à zéro plutôt que supprimée : l'exercice reste
+    // ainsi visible dans le tableau de bord, où le parent peut consulter le
+    // tableau des questions (toutes en "N/A") et voir la remise à zéro
+    // prendre effet.
+    await (_db.update(_db.performances)..where(
+          (t) =>
+              t.profileId.equals(profileId) & t.exerciseId.equals(exerciseId),
+        ))
+        .write(
+          const PerformancesCompanion(
+            badgeLevel: Value(0),
+            successRatePercent: Value(0),
+            attemptsCount: Value(0),
+            lastPracticedAt: Value(null),
+          ),
+        );
+  }
+
   ExercisePerformanceStub _toModel(PerformanceRow row) =>
       ExercisePerformanceStub(
         profileId: row.profileId,

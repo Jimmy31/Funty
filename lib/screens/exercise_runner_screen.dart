@@ -487,6 +487,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
           widget.exerciseId,
           question.id,
           elapsed,
+          correct: false,
         );
         if (!mounted) return;
         setState(() {
@@ -507,6 +508,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       widget.exerciseId,
       question.id,
       elapsed,
+      correct: true,
     );
     await _afterQuestionAnswered();
   }
@@ -934,15 +936,21 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
         // micro, couleur selon ce qui est entendu) sans bouton. Texte
         // reconnu affiché à côté pour le débogage (cf. PRD 12).
         if (showMic)
+          // Le micro reste rigoureusement au centre : les deux moitiés se
+          // font équilibre, si bien que l'apparition du texte reconnu à
+          // droite ne le déplace plus (il sautait auparavant à chaque mot
+          // entendu, la ligne entière étant centrée).
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Expanded(child: SizedBox.shrink()),
               Icon(Icons.mic, size: 40, color: _micColor()),
-              if (_recognizedDebugText.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Flexible(
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
                   child: Text(
-                    '"$_recognizedDebugText"',
+                    _recognizedDebugText.isEmpty
+                        ? ''
+                        : '"$_recognizedDebugText"',
                     style: const TextStyle(
                       fontSize: 13,
                       fontStyle: FontStyle.italic,
@@ -951,7 +959,7 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ],
+              ),
             ],
           ),
         if (showButtons) ...[

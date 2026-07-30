@@ -13,4 +13,10 @@ abstract class PerformanceRepository {
     String exerciseId, {
     required int badgeLevel,
   });
+
+  /// Efface l'agrégat de ce profil sur cet exercice (cf. PRD 6.6, remise à
+  /// zéro des statistiques) — accompagne l'effacement de l'historique par
+  /// question, sans quoi le badge et le taux resteraient figés sur des
+  /// données qui n'existent plus.
+  Future<void> reset(String profileId, String exerciseId);
 }

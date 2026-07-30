@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 
-const kAvailableAvatars = ['🦊', '🐸', '🐼', '🦁', '🐨', '🐵', '🦄', '🐙'];
+const kAvailableAvatars = [
+  '🦊',
+  '🐸',
+  '🐼',
+  '🦁',
+  '🐨',
+  '🐵',
+  '🦄',
+  '🐙',
+  '🐻',
+  '🐺',
+];
 
 /// Dialogue de création **ou d'édition** de profil (nom + avatar), partagé
 /// entre la sélection de profil et le tableau de bord parental. Passer
@@ -46,8 +57,8 @@ class _CreateProfileDialogState extends State<CreateProfileDialog> {
     return AlertDialog(
       title: Text(_isEditing ? 'Modifier le profil' : 'Nouveau profil'),
       // SingleChildScrollView : avec le clavier ouvert sur un petit écran,
-      // le nom + les 8 avatars ne tiennent pas toujours dans la hauteur
-      // restante (overflow observé sur appareil réel).
+      // le nom + la grille d'avatars ne tiennent pas toujours dans la
+      // hauteur restante (overflow observé sur appareil réel).
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -60,6 +71,7 @@ class _CreateProfileDialogState extends State<CreateProfileDialog> {
             const SizedBox(height: 16),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final avatar in kAvailableAvatars)
                   ChoiceChip(

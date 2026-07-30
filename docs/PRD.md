@@ -1,7 +1,7 @@
 # PRD — Funty
 ## Application éducative pour enfants (3-12 ans)
 
-**Version** : 0.42 (disposition aléatoire du Dénombrement, saisie tactile du Dénombrement)
+**Version** : 0.43 (statistiques par question dans l'espace parental, remise à zéro par exercice)
 **Date** : 2026-07-29
 **Statut** : En discussion
 
@@ -97,6 +97,8 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 
 **Couverture des résultats sur les exercices de calcul (acté 2026-07-28)** : la banque de questions d'un exercice de calcul doit couvrir **tous les résultats possibles de sa plage**, pas seulement quelques-uns. Addition ≤ 5 → résultats 0 à 5 ; Addition ≤ 10 → 0 à 10 ; Addition ≤ 20 → 0 à 20 ; Soustraction ≤ 10 → 1 à 10 (le second terme restant strictement inférieur au premier, donc pas de résultat 0). Les questions sont **générées** à partir de la borne de l'exercice plutôt que saisies à la main : pour chaque résultat, jusqu'à 3 écritures différentes, en privilégiant les plus équilibrées (5 + 5 avant 9 + 1) et en écartant les écritures triviales "n + 0" / "n − 0" tant qu'une autre existe dans la borne.
 
+**Les deux ordres d'une addition sont deux questions distinctes (acté 2026-07-29)** : 7 + 11 et 11 + 7 sont posées séparément et suivies séparément dans les statistiques. Commuter les termes va de soi pour un adulte, pas pour un enfant qui apprend — c'est justement une propriété à acquérir, et rien ne dit qu'il réussisse aussi bien les deux. Seule une paire de termes égaux (3 + 3) ne donne qu'une question. La banque d'Addition ≤ 20 compte de ce fait 95 questions, ≤ 10 en compte 40 et ≤ 5 en compte 13. La Soustraction n'est pas concernée, l'ordre y étant porteur de sens.
+
 **Variantes de présentation pour l'Alphabet (majuscules et minuscules)** :
 - Le thème Alphabet passe de 1 à 4 exercices : majuscules (présentation standard), majuscules (orientation/police/taille aléatoires), minuscules (présentation standard), minuscules (orientation/police/taille aléatoires). Les 2 variantes "aléatoires" réutilisent exactement la même reconnaissance vocale que les versions standard (cf. plus haut) — seule la présentation visuelle change, pas la mécanique de réponse.
 - **Amplitude de rotation confirmée** : rotation libre pour la plupart des lettres ; **limitée à 45° maximum uniquement pour les lettres à risque de confusion par rotation** ("b"/"d"/"p"/"q", "M"/"W") — cf. risque résiduel en section 10.
@@ -160,7 +162,8 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 
 ### 6.4 Suivi des performances
 - Par profil, enregistrement pour chaque exercice pratiqué : score/réussite, nombre de tentatives, temps passé, date de dernière pratique.
-- Pour les exercices concernés (cf. granularité "question" en 6.2), ce suivi descend au niveau de la **question précise** : temps de réponse et résultat (juste/faux) de chaque tentative sur cette question — pas seulement un score global par exercice.
+- Pour les exercices concernés (cf. granularité "question" en 6.2), ce suivi descend au niveau de la **question précise** : temps de réponse et résultat (juste/faux) de chaque tentative sur cette question — pas seulement un score global par exercice. **La justesse n'était en réalité pas enregistrée jusqu'au 2026-07-29** (seul le temps l'était), ce qui rendait impossible toute statistique distinguant réussite et échec ; elle l'est désormais. Les tentatives antérieures à ce changement restent en base avec une justesse inconnue et sont **écartées des statistiques** plutôt que rangées arbitrairement d'un côté ou de l'autre.
+- **Ce qui compte comme une tentative** : une question résolue, c'est-à-dire soit une bonne réponse, soit une révélation après 2 échecs (cf. 6.2). Une réponse fausse isolée n'est pas enregistrée séparément — cohérent avec la règle de 6.5 selon laquelle une réponse fausse rapide est simplement ignorée.
 - Agrégation de ces données par thème et par matière pour donner une vue d'ensemble par profil (ex. "80% de réussite sur le thème Addition").
 - Ces données alimentent le tableau de bord parental (6.6) et le mécanisme de sélection adaptative (6.5) ; l'enfant voit une version simplifiée et positive de sa progression (récompenses, cf. 6.7), pas le détail analytique.
 
@@ -178,7 +181,14 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - Gestion des profils : créer/modifier/supprimer un profil enfant. **Modifier** couvre le prénom et l'avatar, via le même dialogue que la création.
 - Curation des exercices par profil (cf. 6.3), avec un **accès direct au catalogue** depuis le tableau de bord (pas seulement via "Curer les exercices" d'un profil précis).
 - Tableau de bord de performance par profil : temps passé, exercices/thèmes pratiqués, taux de réussite (cf. 6.4).
-- **Statistiques par question** : le parent peut consulter les questions précises qui posent le plus de difficulté à l'enfant au sein d'un exercice (ex. "l'enfant a plus de mal avec la lettre Y" ou "avec l'addition 7+8"), sur la base du suivi par question (cf. 6.4 et 6.5).
+- **Statistiques par question** : le parent peut consulter les questions précises qui posent le plus de difficulté à l'enfant au sein d'un exercice (ex. "l'enfant a plus de mal avec la lettre Y" ou "avec l'addition 7+8"), sur la base du suivi par question (cf. 6.4 et 6.5). **Forme arrêtée (2026-07-29)** :
+  - **Vue d'ensemble** : le tableau de bord ne montre, par exercice pratiqué, que son **nom** et son **temps de réponse moyen** — ni badge, ni compteur de tentatives, ni liste de points faibles. Un tap sur la ligne ouvre le détail.
+  - **Détail d'un exercice** : un tableau listant **toutes les questions possibles** de l'exercice (pas seulement celles déjà posées), avec pour chacune son temps de réponse moyen sur les **5 dernières tentatives** et le nombre de tentatives retenues. Les questions **jamais posées** s'affichent **"N/A"** et sont **exclues des moyennes** — les compter comme des zéros ferait passer un exercice à peine entamé pour un échec.
+  - **Tri par difficulté** : la question la plus lente en premier, pour que le parent voie d'emblée où ça coince ; les "N/A" ferment la marche.
+  - **Mauvaise réponse = seuil bronze + 10 s.** Une tentative ratée n'entre pas dans la moyenne pour son temps réel : elle compte pour le seuil bronze de l'exercice majoré de 10 secondes, c'est-à-dire nettement au-delà de la dernière médaille. Sans cette substitution, une mauvaise réponse lâchée très vite passerait pour une réussite éclatante.
+  - **Code couleur adossé aux seuils de médaille** (cf. 6.7) : fond **vert** jusqu'au seuil argent (l'enfant décroche une médaille haute, or ou argent), **jaune** jusqu'au seuil bronze, **rouge** au-delà. Trois couleurs pour quatre paliers, donc or et argent sont regroupés. Une légende rappelle les seuils, qui sont ceux réglés par le parent pour cet exercice.
+  - **Remise à zéro par exercice** : un bouton efface tout l'historique de cet enfant sur cet exercice — temps par question, badge et compteur de tentatives — après confirmation. L'exercice reste visible au tableau de bord, avec toutes ses questions en "N/A".
+  - **Réévaluation avec les seuils courants** : les seuils étant réglables par le parent (cf. 6.7), l'historique est relu avec les seuils du moment plutôt qu'avec ceux en vigueur au moment de chaque tentative. Changer un seuil recolore donc immédiatement tout le tableau.
 - **Niveau de récompense par exercice** (cf. 6.7) : visible dans le tableau de bord comme indicateur simple et lisible de la maîtrise de l'enfant sur chaque exercice, en complément des statistiques plus détaillées.
 - **Réglage du nombre de questions par série (via un slider, défaut 10) et des seuils bronze/argent/or par exercice** (cf. 6.7) : ce réglage s'applique à tous les profils de l'appareil pratiquant cet exercice, pas seulement au profil consulté.
 - Réglages additionnels : définir un temps de session recommandé (rappel doux, pas de blocage strict au MVP).
@@ -315,7 +325,15 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Prononciations alternatives par nombre : mécanisme en place, mais aucune variante retenue.** Le chiffre "1" est parfois mal capté (une seule syllabe nasale très brève, que le modèle `small` rend par moments en "[unk]"). Deux variantes avaient été envisagées sur le modèle des homophones de lettres validés au spike — "hein" (homophone réel de la prononciation /ɛ̃/) et "une" — mais **toutes deux ont été écartées** : un enfant qui dit "hein ?" parce qu'il n'a pas compris la question verrait sa réaction validée comme la réponse "1". Seul "un" est accepté. Le champ `spokenVariants` reste disponible pour d'autres cas si le besoin se confirme, et le texte de débogage à côté du micro (cf. 6.2) sert à identifier ce que le modèle rend réellement. **Point ouvert** : la fiabilité de "un" reste donc à améliorer autrement (piste à explorer : le poids de "[unk]" dans la grammaire fermée, qui concurrence les mots très courts).
 - **Premiers tests automatisés du projet** (`test/object_scatter_test.dart`) : le dossier `test/` était resté vide jusqu'ici. Le placement du Dénombrement étant un algorithme à contrainte forte (non-chevauchement garanti jusqu'à 10 objets, en temps borné), il se prête mal à une vérification purement visuelle — un premier passage de test a d'ailleurs révélé un chevauchement résiduel à 3 objets, corrigé depuis.
 
-Aucune question ouverte à ce stade, hormis la fiabilité de la reconnaissance de "un" signalée ci-dessus. De nouvelles questions apparaîtront naturellement à mesure que la conception détaillée avance.
+### Décisions actées (2026-07-29, second lot)
+
+- **Statistiques par question du tableau de bord entièrement spécifiées et implémentées** — cf. 6.6 pour le détail : vue d'ensemble réduite au nom de l'exercice et à son temps moyen, écran de détail listant toutes les questions (y compris jamais posées, en "N/A"), tri par difficulté, code couleur adossé aux seuils de médaille, remise à zéro par exercice. Ceci solde le point "Statistiques par question" ouvert depuis le 2026-07-24.
+- **Métrique retenue : le temps de réponse moyen sur les 5 dernières tentatives, et non un pourcentage de bonnes réponses.** Deux formulations antérieures ont été écartées en cours de conception : un simple taux de bonnes réponses (qui ignore la vitesse, alors que tout le système de récompense repose dessus, cf. 6.7), puis un taux de "réussites nettes" (bonne réponse sous le seuil or), abandonné car un pourcentage sur 5 tentatives ne prend que 6 valeurs et écrase les nuances. Le temps moyen se compare directement aux seuils de médaille déjà définis, ce qui rend le tableau lisible sans échelle supplémentaire.
+- **Une mauvaise réponse compte pour le seuil bronze + 10 s** dans ce temps moyen (cf. 6.6). C'est ce qui empêche une réponse fausse donnée très vite de se lire comme une performance.
+- **Justesse des tentatives désormais enregistrée** (colonne ajoutée, schéma en version 5) : elle ne l'était pas, ce qui bloquait toute statistique séparant réussite et échec — cf. 6.4.
+- **Remise à zéro : l'agrégat de l'exercice est remis à zéro, pas supprimé.** L'exercice reste ainsi visible au tableau de bord et le parent peut constater l'effacement, au lieu de voir la ligne disparaître.
+
+Aucune question ouverte à ce stade, hormis la fiabilité de la reconnaissance de "un" signalée plus haut. De nouvelles questions apparaîtront naturellement à mesure que la conception détaillée avance.
 
 ---
 

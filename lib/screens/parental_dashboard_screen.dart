@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import '../models/exercise.dart';
 import '../models/profile.dart';
 import '../repositories/question_stats_repository.dart';
+import '../screens/exercise_stats_screen.dart';
 import '../state/app_settings_store.dart';
 import '../state/catalog_store.dart';
 import '../state/performance_store.dart';
 import '../state/profile_store.dart';
-import '../widgets/badge_icon.dart';
 import '../widgets/create_profile_dialog.dart';
 import '../widgets/profile_avatar.dart';
 
@@ -214,33 +214,14 @@ class _ProfileSectionState extends State<_ProfileSection> {
                 child: Text('Aucune performance enregistrée pour l\'instant.'),
               )
             else
+              // Une ligne par exercice pratiqué : son nom et sa moyenne de
+              // réussite, rien de plus (cf. PRD 6.6). Le détail question par
+              // question est à un tap de là.
               for (final performance in performances)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          BadgeIcon(level: performance.badgeLevel, size: 22),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              catalogStore
-                                      .byId(performance.exerciseId)
-                                      ?.title ??
-                                  performance.exerciseId,
-                            ),
-                          ),
-                          Text('${performance.successRatePercent}%'),
-                        ],
-                      ),
-                      _QuestionDifficultyHint(
-                        profileId: widget.profile.id,
-                        exercise: catalogStore.byId(performance.exerciseId),
-                      ),
-                    ],
-                  ),
+                _ExerciseSummaryRow(
+                  profileId: widget.profile.id,
+                  exerciseId: performance.exerciseId,
+                  exercise: catalogStore.byId(performance.exerciseId),
                 ),
           ],
         ),
@@ -249,54 +230,66 @@ class _ProfileSectionState extends State<_ProfileSection> {
   }
 }
 
-/// Questions précises posant le plus de difficulté à l'enfant au sein d'un
-/// exercice (cf. PRD 6.6), au-delà du taux de réussite agrégé affiché
-/// au-dessus — approximée par le temps de réponse moyen le plus élevé.
-class _QuestionDifficultyHint extends StatelessWidget {
-  const _QuestionDifficultyHint({
+/// Une ligne du tableau de bord : nom de l'exercice et moyenne de ses
+/// pourcentages de réussite par question (cf. PRD 6.6). Mène au détail
+/// question par question.
+class _ExerciseSummaryRow extends StatelessWidget {
+  const _ExerciseSummaryRow({
     required this.profileId,
+    required this.exerciseId,
     required this.exercise,
   });
 
   final String profileId;
+  final String exerciseId;
   final Exercise? exercise;
 
   @override
   Widget build(BuildContext context) {
     final exercise = this.exercise;
-    // Comptage n'a pas de granularité "question" (cf. PRD 6.2/6.5).
+    final title = exercise?.title ?? exerciseId;
+
+    // Comptage n'a pas de granularité "question" (cf. PRD 6.2/6.5) : ni
+    // moyenne par question, ni tableau de détail à afficher.
     if (exercise == null || exercise.isSequentialException) {
-      return const SizedBox.shrink();
+      return ListTile(
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        title: Text(title),
+        trailing: const Text('—', style: TextStyle(color: Colors.grey)),
+      );
     }
-    return FutureBuilder<Map<String, Duration>>(
-      future: context
-          .read<QuestionStatsRepository>()
-          .averageResponseTimeByQuestion(profileId, exercise.id),
+
+    return FutureBuilder<Map<String, QuestionTiming>>(
+      future: context.read<QuestionStatsRepository>().recentTimingByQuestion(
+        profileId,
+        exerciseId,
+        bronzeThreshold: exercise.bronzeThreshold,
+        sampleSize: questionStatsSampleSize,
+      ),
       builder: (context, snapshot) {
-        final data = snapshot.data;
-        // Il faut au moins 2 questions distinctes pratiquées pour qu'un
-        // classement de difficulté relative ait un sens.
-        if (data == null || data.length < 2) return const SizedBox.shrink();
-
-        final sorted = data.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value));
-        final hardestLabels = sorted
-            .take(2)
-            .map((entry) {
-              final matches = exercise.questions.where(
-                (q) => q.id == entry.key,
-              );
-              final question = matches.isEmpty ? null : matches.first;
-              return question?.displayValue ?? entry.key;
-            })
-            .join(', ');
-
-        return Padding(
-          padding: const EdgeInsets.only(left: 30, top: 2),
-          child: Text(
-            'Points faibles : $hardestLabels',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        final average = snapshot.hasData
+            ? averageTiming(snapshot.data!.values)
+            : null;
+        return ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          title: Text(title),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: timingBackground(average, exercise),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              average == null ? 'N/A' : formatSeconds(average),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: average == null ? Colors.grey : Colors.black87,
+              ),
+            ),
           ),
+          onTap: () => context.push('/parental/stats/$profileId/$exerciseId'),
         );
       },
     );
