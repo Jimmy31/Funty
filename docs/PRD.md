@@ -345,6 +345,7 @@ Cinq simplifications d'interface issues d'un passage en revue de l'espace parent
 - **Icône de mode de réponse retirée du catalogue parental** (micro / doigt / personne qui parle) : indéchiffrable sans légende, y compris pour le parent — cf. 6.3. Le mode de réponse reste une métadonnée d'exercice à part entière (cf. 6.2), simplement non représentée par une icône.
 - **Switchs d'activation limités au catalogue d'un profil** : le catalogue global de l'espace parental n'en affiche plus, faute de profil auquel les rapporter — cf. 6.3 et 6.6.
 - **Nombre de questions par série borné à 10–50** (au lieu de 5–20) — cf. 6.6. Le défaut reste 10, qui devient donc le minimum ; un réglage antérieur inférieur à 10 est remonté à 10 à l'ouverture du dialogue.
+- **Icône de l'application : la grenouille à lunettes**, cohérente avec le thème de récompense unique du produit (cf. 6.7). Source `docs/graphics/icone.png`, dérivée en trois calques par `tool/generate_launcher_icon.py` puis en mipmaps par `flutter_launcher_icons`. Deux enseignements des essais sur appareil, consignés dans ce script : l'illustration doit être **recadrée** sur son cadre englobant (sa large marge bleue rendait sinon la grenouille minuscule une fois masquée par le lanceur), et l'**arrière-plan adaptatif doit rester uni** — y remettre l'illustration affiche deux grenouilles superposées de tailles différentes, One UI ne mettant pas les deux calques d'une icône adaptative à la même échelle.
 
 ---
 
