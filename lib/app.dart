@@ -36,6 +36,9 @@ class FuntyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         title: 'Funty',
+        // Le bandeau "DEBUG" masque le coin supérieur droit des écrans et
+        // n'apporte rien pendant les essais sur appareil.
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorSchemeSeed: Colors.deepPurple,
           useMaterial3: true,

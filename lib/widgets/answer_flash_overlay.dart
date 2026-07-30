@@ -19,7 +19,10 @@ class AnswerFlashOverlay extends StatelessWidget {
     return IgnorePointer(
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.35, end: 0.0),
-        duration: const Duration(milliseconds: 400),
+        // 1,2 s (triplé) : à 400 ms le flash passait trop vite pour être
+        // remarqué par l'enfant, surtout quand son regard est sur les
+        // propositions plutôt qu'au centre de l'écran.
+        duration: const Duration(milliseconds: 1200),
         curve: Curves.easeOut,
         builder: (context, opacity, child) {
           return Container(color: color.withValues(alpha: opacity));
