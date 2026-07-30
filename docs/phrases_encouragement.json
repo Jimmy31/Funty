@@ -1,17 +1,5 @@
-import 'dart:math';
-
-/// Messages de fin d'exercice (cf. PRD 6.7) : 15 variantes par niveau de
-/// score (0/bronze/argent/or), jamais négatives, tirées au hasard pour
-/// limiter la répétition mot pour mot. Réutilisée telle quelle par
-/// l'exercice Comptage (même principe, score 0-3 basé sur le point atteint
-/// plutôt que sur un temps).
-///
-/// Texte repris de `docs/phrases_encouragement.json`, qui reste la source
-/// de référence côté rédaction : toute retouche s'y fait d'abord, puis se
-/// reporte ici.
-const _messagesByLevel = <int, List<String>>{
-  // echec
-  0: [
+{
+  "echec": [
     "Oups ! Même les bébés animaux tombent avant de savoir marcher !",
     "Pas grave, on apprend en essayant, pas en restant assis !",
     "Raté ? Non, entraînement réussi ! On y retourne ?",
@@ -26,10 +14,9 @@ const _messagesByLevel = <int, List<String>>{
     "Aïe aïe aïe ! Mais ton courage n'a pas raté, lui !",
     "Pas grave du tout, on grandit en trébuchant un peu !",
     "Oups, mission pas encore réussie... mais bientôt, promis !",
-    "Ce n'est qu'un petit détour, ta victoire t'attend au bout !",
+    "Ce n'est qu'un petit détour, ta victoire t'attend au bout !"
   ],
-  // bronze
-  1: [
+  "bronze": [
     "Bronze en poche ! Tu brilles déjà comme une étoile !",
     "Bravo ! Une médaille de bronze, ça pétille de bonheur !",
     "Woohoo, du bronze ! L'argent te fait déjà un clin d'œil !",
@@ -44,10 +31,9 @@ const _messagesByLevel = <int, List<String>>{
     "Youpi, du bronze ! L'argent n'attend plus que toi !",
     "Bien joué ! Ton étoile de bronze brille déjà très fort !",
     "Bravo ! Encore un petit effort et l'argent sera à toi !",
-    "Médaille de bronze en poche, en route pour la suite !",
+    "Médaille de bronze en poche, en route pour la suite !"
   ],
-  // argent
-  2: [
+  "argent": [
     "Argent en poche ! Tu brilles presque autant que le soleil !",
     "Wahou, de l'argent ! L'or te fait un clin d'œil au loin !",
     "Bravo champion ! Tu es à un pas du sommet doré !",
@@ -62,10 +48,9 @@ const _messagesByLevel = <int, List<String>>{
     "Woohoo, argent obtenu ! Plus qu'une marche vers la gloire !",
     "Bien joué ! Tu es officiellement une super-star en argent !",
     "Bravo ! Ton étoile d'argent brille, l'or n'est pas loin !",
-    "Médaille d'argent en poche, l'or n'attend plus que toi !",
+    "Médaille d'argent en poche, l'or n'attend plus que toi !"
   ],
-  // or
-  3: [
+  "or": [
     "OR EN POCHE ! Tu es officiellement un champion du monde !",
     "Waouh, super champion ! Ta médaille d'or brille comme le soleil !",
     "INCROYABLE ! Tu viens de battre ton propre record !",
@@ -80,15 +65,6 @@ const _messagesByLevel = <int, List<String>>{
     "Incroyable exploit ! Garde ce rythme de super-héros !",
     "Médaille d'or en poche ! Tout le monde t'applaudit très fort !",
     "Génial, tu es au sommet ! Continue à briller comme ça !",
-    "Bravo, super champion doré ! Ton aventure ne fait que commencer !",
-  ],
-};
-
-final _random = Random();
-
-/// Tire au hasard une variante de message pour le [badgeLevel] donné
-/// (0 à 3, cf. PRD 6.7).
-String pickEndMessage(int badgeLevel) {
-  final messages = _messagesByLevel[badgeLevel] ?? _messagesByLevel[0]!;
-  return messages[_random.nextInt(messages.length)];
+    "Bravo, super champion doré ! Ton aventure ne fait que commencer !"
+  ]
 }
