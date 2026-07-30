@@ -6,7 +6,6 @@ import '../models/exercise.dart';
 import '../models/profile.dart';
 import '../repositories/question_stats_repository.dart';
 import '../screens/exercise_stats_screen.dart';
-import '../state/app_settings_store.dart';
 import '../state/catalog_store.dart';
 import '../state/performance_store.dart';
 import '../state/profile_store.dart';
@@ -39,58 +38,22 @@ class ParentalDashboardScreen extends StatelessWidget {
     context.push('/profiles/${profile.id}/catalog');
   }
 
-  Future<void> _changePin(BuildContext context) async {
-    final store = context.read<AppSettingsStore>();
-    final currentPin = store.pin;
-    if (currentPin == null) return;
-    final newPin = await showDialog<String>(
-      context: context,
-      builder: (context) => _ChangePinDialog(currentPin: currentPin),
-    );
-    if (newPin == null || !context.mounted) return;
-    await store.updatePin(newPin);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Code parental mis à jour.')));
-  }
-
   @override
   Widget build(BuildContext context) {
     final profiles = context.watch<ProfileStore>().profiles;
 
     return Scaffold(
       appBar: AppBar(
-        // Bouton retour explicite : cet écran est atteint via context.go
-        // (le succès du PIN remplace l'historique), donc le geste retour
-        // système n'a rien vers quoi revenir et quitterait l'app.
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
         title: const Text('Espace parental'),
         actions: [
           // Accès direct au catalogue (cf. PRD 6.6), sans passer par la
-          // section d'un profil précis — l'activation affichée y est
-          // simplement celle du premier profil de l'appareil.
-          if (profiles.isNotEmpty)
-            IconButton(
-              tooltip: 'Catalogue',
-              icon: const Icon(Icons.menu_book_outlined),
-              onPressed: () =>
-                  context.push('/profiles/${profiles.first.id}/catalog'),
-            ),
-          PopupMenuButton<String>(
-            tooltip: 'Réglages',
-            onSelected: (value) {
-              if (value == 'change_pin') _changePin(context);
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'change_pin',
-                child: Text('Changer le code parental'),
-              ),
-            ],
+          // section d'un profil précis : consultation et réglages des
+          // exercices seulement. L'activation, elle, se fait profil par
+          // profil (bouton "Curer les exercices" de chaque section).
+          IconButton(
+            tooltip: 'Catalogue',
+            icon: const Icon(Icons.menu_book_outlined),
+            onPressed: () => context.push('/catalog'),
           ),
         ],
       ),
@@ -292,103 +255,6 @@ class _ExerciseSummaryRow extends StatelessWidget {
           onTap: () => context.push('/parental/stats/$profileId/$exerciseId'),
         );
       },
-    );
-  }
-}
-
-/// Dialogue de changement du code PIN parental (cf. PRD 6.1/6.6). Retourne
-/// le nouveau code ou `null` si annulé.
-class _ChangePinDialog extends StatefulWidget {
-  const _ChangePinDialog({required this.currentPin});
-
-  final String currentPin;
-
-  @override
-  State<_ChangePinDialog> createState() => _ChangePinDialogState();
-}
-
-class _ChangePinDialogState extends State<_ChangePinDialog> {
-  final _currentController = TextEditingController();
-  final _newController = TextEditingController();
-  final _confirmController = TextEditingController();
-  String? _error;
-
-  @override
-  void dispose() {
-    _currentController.dispose();
-    _newController.dispose();
-    _confirmController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (_currentController.text != widget.currentPin) {
-      setState(() => _error = 'Code actuel incorrect.');
-      return;
-    }
-    final newPin = _newController.text;
-    if (newPin.length != 4 || int.tryParse(newPin) == null) {
-      setState(() => _error = 'Le nouveau code doit contenir 4 chiffres.');
-      return;
-    }
-    if (newPin != _confirmController.text) {
-      setState(() => _error = 'La confirmation ne correspond pas.');
-      return;
-    }
-    Navigator.of(context).pop(newPin);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Changer le code parental'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _currentController,
-              decoration: const InputDecoration(labelText: 'Code actuel'),
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              maxLength: 4,
-            ),
-            TextField(
-              controller: _newController,
-              decoration: const InputDecoration(
-                labelText: 'Nouveau code (4 chiffres)',
-              ),
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              maxLength: 4,
-            ),
-            TextField(
-              controller: _confirmController,
-              decoration: const InputDecoration(
-                labelText: 'Confirmer le nouveau code',
-              ),
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              maxLength: 4,
-            ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.red, fontSize: 12),
-                ),
-              ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Annuler'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Enregistrer')),
-      ],
     );
   }
 }

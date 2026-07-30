@@ -13,10 +13,15 @@ import '../widgets/subject_theme_group.dart';
 /// la création d'un profil et depuis l'espace parental pour la curation
 /// continue. Activer et désactiver un exercice sont le même geste (toggle),
 /// symétrie exigée par le PRD.
+///
+/// [profileId] nul = consultation globale depuis l'espace parental : les
+/// réglages d'exercice y restent accessibles (ils sont communs à l'appareil),
+/// mais pas les switchs d'activation, qui n'ont de sens que rapportés à un
+/// profil enfant précis.
 class CatalogScreen extends StatefulWidget {
-  const CatalogScreen({super.key, required this.profileId});
+  const CatalogScreen({super.key, this.profileId});
 
-  final String profileId;
+  final String? profileId;
 
   @override
   State<CatalogScreen> createState() => _CatalogScreenState();
@@ -29,7 +34,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<CatalogStore>().ensureActivationLoaded(widget.profileId);
+    final profileId = widget.profileId;
+    if (profileId != null) {
+      context.read<CatalogStore>().ensureActivationLoaded(profileId);
+    }
   }
 
   /// Après "Terminé" : un profil tout juste créé va directement à sa vue
@@ -37,7 +45,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   /// standard à l'écran qui a poussé le catalogue (espace parental).
   void _onDone(BuildContext context) {
     final origin = GoRouterState.of(context).uri.queryParameters['origin'];
-    if (origin == 'creation') {
+    if (origin == 'creation' && widget.profileId != null) {
       context.go('/profiles/${widget.profileId}/home');
     } else {
       context.pop();
@@ -62,6 +70,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   @override
   Widget build(BuildContext context) {
     final store = context.watch<CatalogStore>();
+    final profileId = widget.profileId;
     final exercises = store.exercises.where((exercise) {
       if (_subjectFilter != null && exercise.subject != _subjectFilter) {
         return false;
@@ -111,11 +120,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
                         icon: const Icon(Icons.tune),
                         onPressed: () => _openSettings(context, exercise),
                       ),
-                    Switch(
-                      value: store.isActive(widget.profileId, exercise.id),
-                      onChanged: (_) =>
-                          store.toggleActive(widget.profileId, exercise.id),
-                    ),
+                    if (profileId != null)
+                      Switch(
+                        value: store.isActive(profileId, exercise.id),
+                        onChanged: (_) =>
+                            store.toggleActive(profileId, exercise.id),
+                      ),
                   ],
                 ),
               ),
@@ -213,8 +223,17 @@ class _ExerciseSettingsDialog extends StatefulWidget {
       _ExerciseSettingsDialogState();
 }
 
+/// Bornes admissibles du nombre de questions par série (cf. PRD 6.7).
+const _minQuestionsPerSeries = 10;
+const _maxQuestionsPerSeries = 50;
+
 class _ExerciseSettingsDialogState extends State<_ExerciseSettingsDialog> {
-  late int _questionsPerSeries = widget.exercise.questionsPerSeries;
+  // Ramené dans les bornes : un réglage enregistré avant leur resserrement
+  // (5 à 20 auparavant) sortirait de l'intervalle du Slider, qui l'interdit.
+  late int _questionsPerSeries = widget.exercise.questionsPerSeries.clamp(
+    _minQuestionsPerSeries,
+    _maxQuestionsPerSeries,
+  );
   late int _bronzeSeconds = widget.exercise.bronzeThreshold.inSeconds;
   late int _silverSeconds = widget.exercise.silverThreshold.inSeconds;
   late int _goldSeconds = widget.exercise.goldThreshold.inSeconds;
@@ -236,9 +255,9 @@ class _ExerciseSettingsDialogState extends State<_ExerciseSettingsDialog> {
             Text('Questions par série : $_questionsPerSeries'),
             Slider(
               value: _questionsPerSeries.toDouble(),
-              min: 5,
-              max: 20,
-              divisions: 15,
+              min: _minQuestionsPerSeries.toDouble(),
+              max: _maxQuestionsPerSeries.toDouble(),
+              divisions: _maxQuestionsPerSeries - _minQuestionsPerSeries,
               label: '$_questionsPerSeries',
               onChanged: (value) =>
                   setState(() => _questionsPerSeries = value.round()),

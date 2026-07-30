@@ -66,7 +66,7 @@ Puisqu'il n'y a pas de monétisation au lancement, les objectifs sont centrés s
 - Enregistrement des performances par profil (par exercice, agrégé par thème et par matière).
 - Système de récompenses simple (étoiles, badges) commun aux deux matières.
 - Mode hors-ligne complet pour tout le contenu déjà téléchargé.
-- Espace parental : gestion des profils, curation des exercices, tableau de bord de performance, protégé par un **code PIN**.
+- Espace parental : gestion des profils, curation des exercices, tableau de bord de performance, accessible depuis l'écran d'accueil (**sans verrou**, cf. 6.6).
 - Application disponible sur **Android uniquement** pour le MVP (Windows et iOS reportés à une phase ultérieure).
 - Contenu en **français uniquement** pour le MVP.
 - Aucune publicité, aucun achat intégré.
@@ -131,7 +131,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Pas de réglage son on/off** : le son et les animations font partie intégrante des récompenses motivant l'enfant (cf. 6.7), ce ne sont pas des options à désactiver.
 - Aucune tranche d'âge n'est attachée au profil lui-même : l'âge n'intervient qu'en métadonnée sur les exercices (cf. 6.2).
 - **Changement de profil par un simple tap sur le bouton retour (revirement)** : l'idée initiale d'une action protégée non triviale (ex. maintien de 3 secondes) a été testée puis abandonnée — jugée peu intuitive et, en pratique, peu fiable au toucher réel (le geste de maintien s'annule facilement au moindre mouvement du doigt). Un tap normal suffit ; aucune protection contre un changement de profil accidentel au MVP.
-- Accès à l'espace de curation/paramétrage (6.6) protégé séparément par le code PIN parental.
+- Accès à l'espace de curation/paramétrage (6.6) par l'icône de roue crantée de l'écran d'accueil, sans verrou (cf. 6.6).
 
 ### 6.2 Bibliothèque d'exercices (catalogue)
 - Structure à deux niveaux : **Matière** (ex. Mathématiques, Lecture/Langage) → **Thème** (ex. "Addition", "Formes et grandeurs", "Alphabet", "Syllabes") → **Exercices** individuels.
@@ -158,7 +158,8 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - Cette logique doit se refléter dans l'interface parentale : il doit être aussi simple de **retirer** un exercice devenu trop facile que d'en **ajouter** un nouveau (actions symétriques, accessibles rapidement, pas seulement l'ajout mis en avant).
 - Un même exercice peut être activé pour plusieurs profils simultanément (le contenu est partagé ; l'activation est propre à chaque profil).
 - Côté enfant, l'application n'affiche que les exercices activés pour son profil, regroupés par matière puis par thème — aucune notion de niveau/palier imposé par l'app elle-même.
-- **Métadonnées techniques masquées côté enfant (revirement).** La classe scolaire recommandée et l'icône de mode de réponse (micro/tactile/mixte) sur chaque carte d'exercice n'apportent rien à l'enfant — la classe scolaire ne lui est pas destinée (repère parental uniquement, cf. 6.2), et l'icône de mode de réponse n'est pas comprise sans légende. Les deux restent affichées dans le catalogue parental (utiles pour filtrer/choisir), mais sont retirées de la vue enfant : seuls le titre de l'exercice et le badge de récompense y apparaissent.
+- **Métadonnées techniques masquées côté enfant (revirement).** La classe scolaire recommandée et l'icône de mode de réponse (micro/tactile/mixte) sur chaque carte d'exercice n'apportent rien à l'enfant — la classe scolaire ne lui est pas destinée (repère parental uniquement, cf. 6.2), et l'icône de mode de réponse n'est pas comprise sans légende. Les deux ont donc été retirées de la vue enfant : seuls le titre de l'exercice et le badge de récompense y apparaissent. **Second revirement (2026-07-30) : l'icône de mode de réponse disparaît aussi du catalogue parental** — micro / doigt / personne qui parle ne se distinguent pas sans légende, y compris pour le parent. La classe scolaire, elle, reste affichée côté parent.
+- **Switch d'activation présent uniquement quand un profil est en contexte (2026-07-30).** Le catalogue ouvert depuis un profil ("Curer les exercices", ou juste après la création d'un profil) garde son switch par exercice ; le catalogue global de l'espace parental, qui ne se rapporte à aucun profil, n'affiche que le bouton de réglages. Un switch sans profil désigné n'a pas de sens : il portait auparavant, silencieusement, sur le premier profil de l'appareil.
 
 ### 6.4 Suivi des performances
 - Par profil, enregistrement pour chaque exercice pratiqué : score/réussite, nombre de tentatives, temps passé, date de dernière pratique.
@@ -177,9 +178,9 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Ne s'applique pas à l'exercice Comptage**, qui n'est pas composé de questions aléatoires indépendantes (cf. 6.2 et 5.1).
 
 ### 6.6 Espace parental
-- Accès protégé par un **code PIN** pour empêcher l'enfant d'y entrer seul. **Code modifiable par le parent** (menu dédié dans l'espace parental : code actuel + nouveau code + confirmation), persisté sur l'appareil — placeholder "1234" tant qu'il n'a pas été changé.
+- **Accès libre depuis l'écran d'accueil, sans code PIN (revirement 2026-07-30)** : l'espace parental s'ouvre d'un tap sur l'icône de **roue crantée** de la barre du haut. Le verrou par code PIN — écran de saisie, code persisté, menu de changement de code — a été entièrement retiré : il coûtait un écran, une table de base de données et un geste à chaque consultation, pour une protection illusoire face à un enfant qui voit son parent taper le code.
 - Gestion des profils : créer/modifier/supprimer un profil enfant. **Modifier** couvre le prénom et l'avatar, via le même dialogue que la création.
-- Curation des exercices par profil (cf. 6.3), avec un **accès direct au catalogue** depuis le tableau de bord (pas seulement via "Curer les exercices" d'un profil précis).
+- Curation des exercices par profil (cf. 6.3), avec un **accès direct au catalogue** depuis le tableau de bord (pas seulement via "Curer les exercices" d'un profil précis). **Ce catalogue global est en consultation/réglages seulement : il ne porte pas de switch d'activation**, celle-ci n'ayant de sens que rapportée à un profil enfant précis (cf. 6.3).
 - Tableau de bord de performance par profil : temps passé, exercices/thèmes pratiqués, taux de réussite (cf. 6.4).
 - **Statistiques par question** : le parent peut consulter les questions précises qui posent le plus de difficulté à l'enfant au sein d'un exercice (ex. "l'enfant a plus de mal avec la lettre Y" ou "avec l'addition 7+8"), sur la base du suivi par question (cf. 6.4 et 6.5). **Forme arrêtée (2026-07-29)** :
   - **Vue d'ensemble** : le tableau de bord ne montre, par exercice pratiqué, que son **nom** et son **temps de réponse moyen** — ni badge, ni compteur de tentatives, ni liste de points faibles. Un tap sur la ligne ouvre le détail.
@@ -190,7 +191,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
   - **Remise à zéro par exercice** : un bouton efface tout l'historique de cet enfant sur cet exercice — temps par question, badge et compteur de tentatives — après confirmation. L'exercice reste visible au tableau de bord, avec toutes ses questions en "N/A".
   - **Réévaluation avec les seuils courants** : les seuils étant réglables par le parent (cf. 6.7), l'historique est relu avec les seuils du moment plutôt qu'avec ceux en vigueur au moment de chaque tentative. Changer un seuil recolore donc immédiatement tout le tableau.
 - **Niveau de récompense par exercice** (cf. 6.7) : visible dans le tableau de bord comme indicateur simple et lisible de la maîtrise de l'enfant sur chaque exercice, en complément des statistiques plus détaillées.
-- **Réglage du nombre de questions par série (via un slider, défaut 10) et des seuils bronze/argent/or par exercice** (cf. 6.7) : ce réglage s'applique à tous les profils de l'appareil pratiquant cet exercice, pas seulement au profil consulté.
+- **Réglage du nombre de questions par série (via un slider, défaut 10, bornes 10 à 50) et des seuils bronze/argent/or par exercice** (cf. 6.7) : ce réglage s'applique à tous les profils de l'appareil pratiquant cet exercice, pas seulement au profil consulté.
 - Réglages additionnels : définir un temps de session recommandé (rappel doux, pas de blocage strict au MVP).
 
 ### 6.7 Système de récompenses et progression
@@ -250,7 +251,7 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 ### 8.1 Décisions actées (2026-07-24)
 - **Android uniquement pour le MVP (revirement)** : après examen, le support Windows dès le MVP compliquait sensiblement le projet (double toolchain, double surface de test, adaptation clavier/souris, reconnaissance vocale à valider sur deux moteurs différents) — l'inverse de l'objectif initial, qui était de se simplifier la vie en testant localement sur un plus grand écran. **Windows et iOS sont donc tous deux reportés** à une phase ultérieure. Le besoin de confort de test sur grand écran reste satisfiable pendant le développement via un émulateur Android en grande résolution ou une tablette Android, sans avoir à maintenir une cible Windows en production.
 - **Langue : français uniquement pour le MVP.** Le multilingue n'est pas exclu plus tard mais n'est pas un objectif MVP.
-- **Verrou parental : par code PIN**, pour protéger à la fois la configuration des exercices (curation) et l'accès aux statistiques de performance (cf. 6.6).
+- **Verrou parental : par code PIN**, pour protéger à la fois la configuration des exercices (curation) et l'accès aux statistiques de performance (cf. 6.6). *(Abandonné le 2026-07-30 — cf. revirement en 6.6.)*
 - **Nom du produit confirmé : Funty.**
 - **Alignement pédagogique souple** : les classes scolaires (PS→CM2) et le contenu des exercices s'inspirent des programmes de l'Éducation nationale sans viser une conformité stricte/validée au lancement. À revisiter si l'app cherche plus tard une crédibilité renforcée auprès d'enseignants (ex. V2).
 - **Reconnaissance vocale confirmée pour le MVP** : neuf des douze exercices (4 exercices Alphabet, chiffres 0-9, formes géométriques, comptage jusqu'à 10, dénombrement 1-5, dénombrement 1-10) sont purement vocaux, et 3 autres (Addition ×2, Soustraction) sont vocal + tactile — cf. section 5.1. Portée limitée à la reconnaissance d'un **mot isolé à chaque fois** (un chiffre, une lettre, un nom de forme), y compris pour Comptage et Dénombrement où la réponse reste un seul chiffre (pas de reconnaissance de séquence ni de phrase libre).
@@ -335,13 +336,23 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 
 Aucune question ouverte à ce stade, hormis la fiabilité de la reconnaissance de "un" signalée plus haut. De nouvelles questions apparaîtront naturellement à mesure que la conception détaillée avance.
 
+### Décisions actées (2026-07-30)
+
+Cinq simplifications d'interface issues d'un passage en revue de l'espace parental et du catalogue.
+
+- **Code parental supprimé (revirement sur une décision du 2026-07-24).** L'écran de saisie du PIN, le menu de changement de code, la table `app_settings` qui le persistait et le placeholder "1234" ont tous disparu. L'espace parental s'ouvre directement, via une **icône de roue crantée** remplaçant le cadenas de l'écran d'accueil — cf. 6.6. Schéma de base passé en **version 6** : la migration détruit la table devenue inutile.
+- **Menu de debug retiré** : le bouton "Spike reconnaissance vocale" de l'écran d'accueil (visible en `kDebugMode`) et l'écran de spike Vosk qu'il ouvrait ont été supprimés du code. Le spike a rempli son rôle (cf. section 12), ses conclusions sont consignées ici, et la reconnaissance vocale est désormais éprouvée dans les exercices réels. Le texte de débogage affiché à côté du micro pendant un exercice (cf. 6.2), lui, reste en place.
+- **Icône de mode de réponse retirée du catalogue parental** (micro / doigt / personne qui parle) : indéchiffrable sans légende, y compris pour le parent — cf. 6.3. Le mode de réponse reste une métadonnée d'exercice à part entière (cf. 6.2), simplement non représentée par une icône.
+- **Switchs d'activation limités au catalogue d'un profil** : le catalogue global de l'espace parental n'en affiche plus, faute de profil auquel les rapporter — cf. 6.3 et 6.6.
+- **Nombre de questions par série borné à 10–50** (au lieu de 5–20) — cf. 6.6. Le défaut reste 10, qui devient donc le minimum ; un réglage antérieur inférieur à 10 est remonté à 10 à l'ouverture du dialogue.
+
 ---
 
 ## 9. Roadmap proposée
 
 | Phase | Contenu |
 |---|---|
-| **MVP** | Multi-profils sur l'appareil + bibliothèque en croissance continue (12 exercices actés au lancement, cf. 5.1) + curation parentale complète (code PIN) + suivi des performances + hors-ligne total, sur **Android uniquement** |
+| **MVP** | Multi-profils sur l'appareil + bibliothèque en croissance continue (12 exercices actés au lancement, cf. 5.1) + curation parentale complète + suivi des performances + hors-ligne total, sur **Android uniquement** |
 | **V1** | **Windows et/ou iOS** (à prioriser le moment venu), bibliothèque élargie (plus de thèmes/exercices par matière), espace parental enrichi (ex. export/partage des performances) |
 | **V2** | Monétisation à définir, domaines pédagogiques additionnels, synchronisation multi-appareils, recommandations automatiques d'exercices |
 
@@ -376,7 +387,7 @@ Aucune question ouverte à ce stade, hormis la fiabilité de la reconnaissance d
 ## 11. Prochaines étapes
 
 1. ✅ **Spike technique prioritaire — fait, résultat positif.** Voir section 12 pour le détail. Reste à faire : tester avec une vraie voix d'enfant, sur les lettres et formes (seul un chiffre a été testé avec une voix adulte pour l'instant), et mesurer la fiabilité sur un jeu plus large de mots.
-2. Passer à la conception détaillée : maquettes des écrans clés, pensées **tactile uniquement** — écran catalogue affiché à la création d'un profil, curation parentale avec ajout/retrait symétriques et slider du nombre de questions, vue enfant par matière/thème, exercice type (dont l'écran de reconnaissance vocale et l'écran de Dénombrement avec ses objets disposés aléatoirement), tableau de bord parental (dont les statistiques par question), écran de saisie du code PIN.
+2. Passer à la conception détaillée : maquettes des écrans clés, pensées **tactile uniquement** — écran catalogue affiché à la création d'un profil, curation parentale avec ajout/retrait symétriques et slider du nombre de questions, vue enfant par matière/thème, exercice type (dont l'écran de reconnaissance vocale et l'écran de Dénombrement avec ses objets disposés aléatoirement), tableau de bord parental (dont les statistiques par question).
 3. Choix technique de la stack (Flutter recommandé, en gardant Windows/iOS comme cibles futures faciles à ajouter) et du modèle de données local (profils, catalogue d'exercices, activations par profil, performances **par question**), en confirmant l'API de reconnaissance vocale retenue sur Android.
 4. ✅ **Fait.** Algorithme de placement aléatoire sans chevauchement pour Dénombrement (jusqu'à 10 objets), et banque d'illustrations constituée : 7 familles d'animaux × 10 images (cf. 5.1 et décisions du 2026-07-26).
 5. Implémenter l'algorithme de sélection adaptative des questions (priorité aux questions jamais vues choisies aléatoirement, moyenne des 3 dernières tentatives avec pénalité de 5 s sur 2 échecs, non-répétition immédiate) — désormais entièrement spécifié.

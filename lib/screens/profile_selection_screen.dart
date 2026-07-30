@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +6,6 @@ import '../models/profile.dart';
 import '../state/profile_store.dart';
 import '../widgets/create_profile_dialog.dart';
 import '../widgets/profile_avatar.dart';
-import 'dev_vosk_spike_screen.dart';
 
 /// Écran d'accueil (cf. PRD 6.1) : liste des profils enfants sur l'appareil,
 /// création d'un nouveau profil, accès à l'espace parental.
@@ -44,19 +42,9 @@ class ProfileSelectionScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Espace parental',
-            icon: const Icon(Icons.lock_outline),
-            onPressed: () => context.push('/parental/pin'),
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.push('/parental/dashboard'),
           ),
-          if (kDebugMode)
-            IconButton(
-              tooltip: 'Spike reconnaissance vocale (debug)',
-              icon: const Icon(Icons.bug_report_outlined),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const VoiceSpikeScreen()),
-                );
-              },
-            ),
         ],
       ),
       body: profiles.isEmpty

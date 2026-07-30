@@ -82,18 +82,6 @@ class ExerciseSettings extends Table {
   Set<Column> get primaryKey => {exerciseId};
 }
 
-/// Réglages globaux de l'application — une seule ligne (id fixe = 0). Pour
-/// l'instant, uniquement le code PIN parental (cf. PRD 6.1/6.6), modifiable
-/// depuis l'espace parental plutôt que codé en dur.
-@DataClassName('AppSettingsRow')
-class AppSettings extends Table {
-  IntColumn get id => integer()();
-  TextColumn get pinCode => text()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
 @DriftDatabase(
   tables: [
     Profiles,
@@ -101,14 +89,13 @@ class AppSettings extends Table {
     Performances,
     QuestionAttempts,
     ExerciseSettings,
-    AppSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -120,11 +107,14 @@ class AppDatabase extends _$AppDatabase {
       if (from < 3) {
         await m.createTable(exerciseSettings);
       }
-      if (from < 4) {
-        await m.createTable(appSettings);
-      }
+      // Le schéma 4 créait une table app_settings pour le code PIN parental,
+      // supprimé depuis (l'espace parental s'ouvre sans verrou) : plus rien
+      // à créer ici, et la table est détruite en 6 si elle existe.
       if (from < 5) {
         await m.addColumn(questionAttempts, questionAttempts.correct);
+      }
+      if (from < 6) {
+        await customStatement('DROP TABLE IF EXISTS app_settings');
       }
     },
   );

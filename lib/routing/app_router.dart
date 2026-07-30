@@ -5,18 +5,22 @@ import '../screens/child_home_screen.dart';
 import '../screens/exercise_runner_screen.dart';
 import '../screens/exercise_stats_screen.dart';
 import '../screens/parental_dashboard_screen.dart';
-import '../screens/parental_pin_screen.dart';
 import '../screens/profile_selection_screen.dart';
 
-/// Table de routes (cf. plan de squelette d'écrans). L'écran de spike Vosk
-/// n'y figure pas : il est atteint uniquement en debug via un
-/// `Navigator.push` classique depuis [ProfileSelectionScreen].
+/// Table de routes (cf. plan de squelette d'écrans).
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
       builder: (context, state) => const ProfileSelectionScreen(),
+    ),
+    // Catalogue consulté globalement depuis l'espace parental : réglages
+    // d'exercice seulement, sans activation (celle-ci se fait profil par
+    // profil, cf. route ci-dessous).
+    GoRoute(
+      path: '/catalog',
+      builder: (context, state) => const CatalogScreen(),
     ),
     GoRoute(
       path: '/profiles/:profileId/catalog',
@@ -34,10 +38,6 @@ final appRouter = GoRouter(
         profileId: state.pathParameters['profileId']!,
         exerciseId: state.pathParameters['exerciseId']!,
       ),
-    ),
-    GoRoute(
-      path: '/parental/pin',
-      builder: (context, state) => const ParentalPinScreen(),
     ),
     GoRoute(
       path: '/parental/dashboard',
