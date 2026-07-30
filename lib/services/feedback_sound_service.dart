@@ -5,16 +5,21 @@ import 'package:audioplayers/audioplayers.dart';
 /// Deux lecteurs distincts pour ne pas se couper l'un l'autre en cas de
 /// déclenchements rapprochés.
 ///
-/// Les niveaux sont réglés dans les fichiers eux-mêmes, pas ici : le volume
-/// d'un [AudioPlayer] plafonne à 1.0, qui est déjà la valeur par défaut, donc
-/// monter le son d'erreur passe forcément par l'amplification de l'asset
-/// (`incorrect.wav` est normalisé plus fort que `correct.wav`, à la demande).
+/// Le son d'erreur doit s'entendre plus fort que celui de réussite (demande
+/// explicite). `incorrect.wav` est donc déjà à pleine échelle numérique — on
+/// ne peut pas monter plus haut, ni par le volume du lecteur (plafonné à 1.0,
+/// sa valeur par défaut), ni par l'asset. Le seul levier restant est de
+/// descendre le son de réussite, d'où le [_correctVolume] ci-dessous.
 class FeedbackSoundService {
   final _correctPlayer = AudioPlayer();
   final _incorrectPlayer = AudioPlayer();
 
-  Future<void> playCorrect() =>
-      _correctPlayer.play(AssetSource('sounds/correct.wav'));
+  static const _correctVolume = 0.6;
+
+  Future<void> playCorrect() => _correctPlayer.play(
+    AssetSource('sounds/correct.wav'),
+    volume: _correctVolume,
+  );
 
   Future<void> playIncorrect() =>
       _incorrectPlayer.play(AssetSource('sounds/incorrect.wav'));
