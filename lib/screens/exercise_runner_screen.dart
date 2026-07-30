@@ -20,6 +20,7 @@ import '../services/reward_calculator.dart';
 import '../services/vosk_recognition_service.dart';
 import '../state/catalog_store.dart';
 import '../state/performance_store.dart';
+import '../widgets/badge_icon.dart';
 import '../widgets/answer_flash_overlay.dart';
 
 enum _RunnerStatus { loading, playing, listening, revealed, finished, error }
@@ -1020,11 +1021,13 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            level > 0 ? Icons.emoji_events : Icons.favorite,
-            size: 72,
-            color: level > 0 ? Colors.amber.shade600 : Colors.pink.shade300,
-          ),
+          // Le niveau 0 garde un cœur plutôt que l'emplacement vide de
+          // [BadgeIcon] : sur l'écran de fin, il faut consoler l'enfant, pas
+          // lui montrer la place que sa coupe n'occupe pas.
+          if (level > 0)
+            BadgeIcon(level: level, size: 140)
+          else
+            Icon(Icons.favorite, size: 72, color: Colors.pink.shade300),
           const SizedBox(height: 16),
           Text(
             message,
