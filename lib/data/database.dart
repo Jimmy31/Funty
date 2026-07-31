@@ -95,7 +95,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -115,6 +115,17 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await customStatement('DROP TABLE IF EXISTS app_settings');
+      }
+      if (from < 7) {
+        // Rattrapage unique : la suppression d'un profil a longtemps laissé
+        // son historique par question derrière elle (la cascade de
+        // [DriftProfileRepository.delete] ignorait cette table, ajoutée au
+        // schéma en version 2, soit après elle). Les lignes déjà orphelines
+        // ne se rattachent à rien et ne peuvent plus qu'occuper de la place.
+        await customStatement(
+          'DELETE FROM question_attempts '
+          'WHERE profile_id NOT IN (SELECT id FROM profiles)',
+        );
       }
     },
   );
