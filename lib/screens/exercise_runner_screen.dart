@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../data/animal_families.dart';
 import '../data/catalog_seed.dart' show digitWords;
 import '../models/exercise.dart';
+import '../models/geometric_shape.dart';
 import '../models/question.dart';
 import '../repositories/question_stats_repository.dart';
 import '../services/adaptive_question_selector.dart';
@@ -17,11 +18,13 @@ import '../services/letter_presentation.dart';
 import '../services/object_scatter.dart';
 import '../services/question_selector.dart';
 import '../services/reward_calculator.dart';
+import '../services/shape_presentation.dart';
 import '../services/vosk_recognition_service.dart';
 import '../state/catalog_store.dart';
 import '../state/performance_store.dart';
 import '../widgets/badge_icon.dart';
 import '../widgets/answer_flash_overlay.dart';
+import '../widgets/shape_display.dart';
 
 enum _RunnerStatus { loading, playing, listening, revealed, finished, error }
 
@@ -130,6 +133,11 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
   final _presentationRandom = Random();
   LetterPresentation? _presentation;
   List<int>? _tactileOptions;
+
+  // Reconnaissance des formes : couleur et orientation tirées à chaque
+  // question (cf. PRD 5.1), jamais deux fois la même couleur de suite.
+  final _shapeRandom = Random();
+  ShapePresentation? _shapePresentation;
 
   // Dénombrement : famille d'animaux et images tirées au hasard à chaque
   // question (cf. PRD 5.1) — jamais la même famille deux questions de
@@ -253,6 +261,15 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       _denombrementSeed = _denombrementRandom.nextInt(1 << 32);
       _scatterCache = null;
       _scatterCacheAspect = null;
+      // Présentation de la forme tirée une seule fois par question, comme
+      // les propositions QCM plus bas : la tirer dans `build()` la ferait
+      // changer de couleur à chaque résultat partiel de l'écoute continue.
+      _shapePresentation = next.shape != null
+          ? randomShapePresentation(
+              _shapeRandom,
+              avoid: _shapePresentation?.color,
+            )
+          : null;
       // Propositions QCM tirées une seule fois par question (cf. PRD 6.2) —
       // sinon elles se régénèrent à chaque reconstruction de l'écran (ex. à
       // chaque résultat partiel de l'écoute continue) et changent sans
@@ -821,6 +838,21 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
     );
   }
 
+  /// Reconnaissance des formes : la forme dessinée, dans la couleur et
+  /// l'orientation tirées pour cette question (cf. PRD 5.1). Occupe toute la
+  /// place que l'écran lui laisse, comme les objets du Dénombrement.
+  Widget _buildShapeDisplay(GeometricShape shape) {
+    final presentation = _shapePresentation!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ShapeDisplay(
+        shape: shape,
+        color: presentation.color,
+        portrait: presentation.portrait,
+      ),
+    );
+  }
+
   /// Progression dans la série (ex. "5 / 20") — pour Comptage, position
   /// dans la tentative en cours plutôt qu'une série au sens habituel (cf.
   /// PRD 6.2 : Comptage n'a pas de série de questions).
@@ -973,18 +1005,23 @@ class _ExerciseRunnerScreenState extends State<ExerciseRunnerScreen> {
       ],
     ];
 
-    // Dénombrement : les objets méritent toute la place disponible, donc
-    // progression en haut, réponses ancrées en bas, et la zone de comptage
-    // prend tout ce qui reste (cf. PRD 5.1). Les autres exercices gardent la
-    // mise en page défilante, plus tolérante à un contenu haut (grenouille +
-    // 8 propositions sur un petit écran).
-    if (_denombrementAssets != null) {
+    // Dénombrement et Formes : l'illustration mérite toute la place
+    // disponible, donc progression en haut, réponses ancrées en bas, et la
+    // zone d'affichage prend tout ce qui reste (cf. PRD 5.1). Les autres
+    // exercices gardent la mise en page défilante, plus tolérante à un
+    // contenu haut (grenouille + 8 propositions sur un petit écran).
+    final fullHeightDisplay = _denombrementAssets != null
+        ? _buildObjectImages()
+        : question.shape != null
+        ? _buildShapeDisplay(question.shape!)
+        : null;
+    if (fullHeightDisplay != null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildProgressIndicator(),
           const SizedBox(height: 8),
-          Expanded(child: _buildObjectImages()),
+          Expanded(child: fullHeightDisplay),
           const SizedBox(height: 12),
           ...answerArea,
         ],

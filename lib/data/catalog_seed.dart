@@ -1,5 +1,6 @@
 import '../models/exercise.dart';
 import '../models/exercise_performance.dart';
+import '../models/geometric_shape.dart';
 import '../models/interaction_format.dart';
 import '../models/profile.dart';
 import '../models/question.dart';
@@ -191,15 +192,19 @@ List<Question> _subtractionQuestions(String exerciseId, int maxValue) {
   return questions;
 }
 
+/// Les 5 formes de l'exercice (cf. PRD 5.1), dessinées à l'écran par
+/// [ShapeDisplay] : le nom porté par [Question.displayValue] ne sert qu'au
+/// parent et à la révélation, jamais à l'affichage de la question.
 List<Question> _shapeQuestions(String exerciseId) {
-  const shapes = {'cercle': 'cercle', 'carré': 'carré', 'triangle': 'triangle'};
-  return shapes.entries
+  return GeometricShape.values
       .map(
-        (e) => Question(
-          id: '$exerciseId-${e.key}',
+        (shape) => Question(
+          id: '$exerciseId-${shape.name}',
           exerciseId: exerciseId,
-          displayValue: e.key,
-          expectedSpokenWord: e.value,
+          displayValue: shape.label,
+          expectedSpokenWord: shape.label,
+          spokenVariants: shape.spokenVariants,
+          shape: shape,
         ),
       )
       .toList();

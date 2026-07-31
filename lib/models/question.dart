@@ -1,3 +1,5 @@
+import 'geometric_shape.dart';
+
 /// Une question individuelle au sein d'un exercice (cf. granularité
 /// "question", PRD 6.2) — ex. une lettre précise de l'exercice Alphabet, une
 /// paire précise de l'exercice Addition.
@@ -9,6 +11,7 @@ class Question {
     this.expectedSpokenWord,
     this.expectedAnswer,
     this.objectCount,
+    this.shape,
     this.spokenVariants,
   });
 
@@ -24,6 +27,14 @@ class Question {
   /// tirées au hasard par l'écran d'exercice à chaque présentation de la
   /// question, plutôt que figées ici (cf. [ExerciseRunnerScreen]).
   final int? objectCount;
+
+  /// Pour la reconnaissance des formes : la forme géométrique à dessiner.
+  /// Null pour les autres exercices. Quand elle est renseignée, l'écran
+  /// d'exercice trace la forme et n'affiche **pas** [displayValue] — qui est
+  /// justement le nom que l'enfant doit trouver, et qui ne sert donc plus
+  /// qu'au parent (statistiques par question) et à la révélation après
+  /// 2 échecs.
+  final GeometricShape? shape;
 
   /// Mot cible pour la grammaire de reconnaissance vocale fermée (cf. spike
   /// technique) — null si l'exercice n'a pas de mode vocal pour cette
