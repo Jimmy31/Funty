@@ -62,10 +62,15 @@ class DriftProfileRepository implements ProfileRepository {
 
   @override
   Future<void> delete(String id) async {
-    // Nettoyage en cascade : sans ça, activations/performances d'un profil
-    // supprimé resteraient orphelines dans la base (contrairement à
-    // l'ancienne version en mémoire, où tout disparaissait de toute façon).
+    // Nettoyage en cascade : sans ça, les données d'un profil supprimé
+    // resteraient orphelines dans la base (contrairement à l'ancienne version
+    // en mémoire, où tout disparaissait de toute façon). Toute table portant
+    // un profileId doit figurer ici — l'historique par question y manquait,
+    // ajouté au schéma (v2) après l'écriture de cette cascade.
     await _db.transaction(() async {
+      await (_db.delete(
+        _db.questionAttempts,
+      )..where((t) => t.profileId.equals(id))).go();
       await (_db.delete(
         _db.performances,
       )..where((t) => t.profileId.equals(id))).go();

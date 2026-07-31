@@ -195,6 +195,20 @@ Pour les deux additions, l'enfant pourra donc soit dire le résultat à voix hau
 - **Réglage du nombre de questions par série (via un slider, défaut 10, bornes 10 à 50) et des seuils bronze/argent/or par exercice** (cf. 6.7) : ce réglage s'applique à tous les profils de l'appareil pratiquant cet exercice, pas seulement au profil consulté.
 - Réglages additionnels : définir un temps de session recommandé (rappel doux, pas de blocage strict au MVP).
 
+#### Durée de vie des données d'un enfant (arrêté le 2026-07-31)
+
+Trois gestes de l'espace parental touchent aux données enregistrées, et il est important de ne pas les confondre : un seul efface réellement quelque chose sur un exercice.
+
+| Geste | Activation de l'exercice | Agrégat (badge, nombre de tentatives) | Historique par question |
+|---|---|---|---|
+| **Décocher** un exercice au catalogue | supprimée | intact | intact |
+| **Remettre à zéro** depuis l'écran de détail | inchangée | remis à zéro, ligne conservée | effacé |
+| **Supprimer** un profil | supprimée | supprimé | supprimé |
+
+Autrement dit, **décocher un exercice le masque, ça ne l'efface pas**. Ses tentatives et son agrégat restent en base : rien ne s'accumule à l'écran, une désactivation faite par erreur ne détruit rien, et recocher l'exercice plus tard fait revenir son historique intact. Seul le bouton de remise à zéro détruit des données pour un exercice donné, et il demande confirmation.
+
+La suppression d'un profil, elle, emporte tout ce qui le concerne, dans une seule transaction. **Toute table portant un `profileId` doit être nettoyée là** : l'historique par question y manquait — ajouté au schéma en version 2, après l'écriture de cette cascade — et ses lignes survivaient indéfiniment à la suppression du profil.
+
 ### 6.7 Système de récompenses et progression
 - Le son et les animations sont eux-mêmes des **récompenses** pour l'enfant (cf. 6.1) : ils ne sont ni configurables ni désactivables au MVP.
 - **Thème visuel unique et fixe : les "Grenouilles à lunettes".** Après réflexion, un système d'univers personnalisables par profil a été jugé trop complexe pour la valeur ajoutée qu'il apporte à un MVP — remplacé par un seul thème de récompense, commun à tous les profils, pas de choix ni de configuration à ce niveau.
@@ -359,8 +373,10 @@ Un lot d'ergonomie sur l'écran d'accueil et l'espace parental, plus deux correc
 
 - **Accueil : un profil par ligne, en grand.** La grille à deux colonnes laissait des avatars petits pour des enfants qui ne savent pas lire et se repèrent au dessin. Chaque profil occupe désormais la moitié de la hauteur visible — deux tiennent à l'écran sans défilement, les suivants défilent. La hauteur est calculée sur la place réellement disponible, dans une `SafeArea` : sans elle, le second prénom passait sous la barre de navigation système.
 - **Édition d'un profil par appui long** sur son avatar ou son prénom, dans l'espace parental — cf. 6.6. Le bouton crayon disparaît : il n'indiquait pas ce qu'il modifiait, alors que l'appui long désigne l'élément lui-même.
-- **Le résumé d'un profil liste ses exercices activés, pas ses exercices pratiqués** — cf. 6.6. Lister les seconds donnait un tableau sans rapport avec la curation : un exercice tout juste coché n'y figurait pas, un exercice retiré y restait. Conséquence assumée : retirer un exercice de la curation retire aussi son historique du résumé.
+- **Le résumé d'un profil liste ses exercices activés, pas ses exercices pratiqués** — cf. 6.6. Lister les seconds donnait un tableau sans rapport avec la curation : un exercice tout juste coché n'y figurait pas, un exercice retiré y restait. Conséquence assumée (validée le 2026-07-31) : retirer un exercice de la curation retire aussi son historique du résumé — cf. le tableau de la durée de vie des données en 6.6.
 - **Bug corrigé : le temps moyen d'un exercice restait bloqué sur "N/A".** La requête était relancée à chaque reconstruction de l'écran et repassait par son état d'attente, affiché comme "N/A" faute de distinguer *pas encore chargé* de *jamais posée*. Une ligne pourtant renseignée pouvait donc rester sur "N/A" jusqu'à ce qu'on quitte l'écran et qu'on y revienne. La lecture est maintenant lancée une seule fois, et l'attente s'affiche par un caractère distinct.
+- **Durée de vie des données d'un enfant clarifiée et consignée** (tableau en 6.6) : décocher un exercice le masque sans rien effacer, la remise à zéro efface son historique, la suppression d'un profil emporte tout.
+- **Bug corrigé : la suppression d'un profil laissait son historique par question en base.** La cascade de nettoyage effaçait activations et agrégats de performance, mais pas les tentatives par question — table ajoutée au schéma après son écriture. Rien de visible à l'écran (les identifiants de profil sont des UUID, aucun nouveau profil n'héritait de ces lignes), mais la base grossissait sans raison à chaque suppression.
 - **Bug corrigé : une remise à zéro ne se propageait pas au tableau de bord.** Les statistiques par question vivent dans un dépôt non observable : rien ne signalait leur changement aux écrans qui les lisent. `PerformanceStore` expose désormais une **révision**, incrémentée à chaque écriture, dont le changement déclenche la relecture — cf. 6.6.
 
 ---
