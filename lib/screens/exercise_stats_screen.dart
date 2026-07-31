@@ -113,44 +113,43 @@ class _ExerciseStatsScreenState extends State<ExerciseStatsScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<Map<String, QuestionTiming>>(
-        future: _stats,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final stats = snapshot.data ?? const <String, QuestionTiming>{};
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (profile != null)
+      // SafeArea : le corps s'étend sinon sous la barre de navigation
+      // système, qui recouvre le bas du tableau une fois défilé jusqu'en bas
+      // (même précaution que sur l'écran d'accueil).
+      body: SafeArea(
+        child: FutureBuilder<Map<String, QuestionTiming>>(
+          future: _stats,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final stats = snapshot.data ?? const <String, QuestionTiming>{};
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (profile != null)
+                  Text(
+                    profile.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                const SizedBox(height: 4),
                 Text(
-                  profile.name,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  'Temps de réponse moyen sur les $questionStatsSampleSize '
+                  'dernières tentatives, la plus lente en premier. Une '
+                  'mauvaise réponse compte pour '
+                  '${formatSeconds(failedAttemptTime(exercise.bronzeThreshold))}. '
+                  'Les questions jamais posées sont en "N/A" et ne comptent '
+                  'pas dans la moyenne.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                 ),
-              const SizedBox(height: 4),
-              Text(
-                'Temps de réponse moyen sur les $questionStatsSampleSize '
-                'dernières tentatives, la plus lente en premier. Une mauvaise '
-                'réponse compte pour '
-                '${formatSeconds(failedAttemptTime(exercise.bronzeThreshold))}. '
-                'Les questions jamais posées sont en "N/A" et ne comptent pas '
-                'dans la moyenne.',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-              ),
-              const SizedBox(height: 12),
-              _ThresholdLegend(exercise: exercise),
-              const SizedBox(height: 16),
-              _TimingTable(exercise: exercise, stats: stats),
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: () => _reset(exercise),
-                icon: const Icon(Icons.restart_alt),
-                label: const Text('Remettre les statistiques à zéro'),
-              ),
-            ],
-          );
-        },
+                const SizedBox(height: 12),
+                _ThresholdLegend(exercise: exercise),
+                const SizedBox(height: 16),
+                _TimingTable(exercise: exercise, stats: stats),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

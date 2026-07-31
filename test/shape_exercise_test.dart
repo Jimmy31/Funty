@@ -6,20 +6,23 @@ import 'package:funty/models/geometric_shape.dart';
 import 'package:funty/services/shape_presentation.dart';
 
 /// Vérifie l'exercice de reconnaissance des formes (cf. PRD 5.1) : la banque
-/// de questions couvre bien les 5 formes, chacune avec un mot cible utilisable
-/// par la grammaire vocale, et la présentation ne réutilise jamais la même
-/// couleur deux questions de suite.
+/// de questions couvre bien toutes les formes, chacune avec un mot cible
+/// utilisable par la grammaire vocale, et la présentation ne réutilise jamais
+/// la même couleur deux questions de suite.
 void main() {
   final formes = buildCatalogSeed().firstWhere((e) => e.id == 'ex-formes');
 
   group('banque de questions', () {
-    test('couvre les 5 formes, une question chacune', () {
+    test('couvre toutes les formes, une question chacune', () {
       expect(formes.questions, hasLength(GeometricShape.values.length));
       expect(
         formes.questions.map((q) => q.shape).toSet(),
         GeometricShape.values.toSet(),
       );
-      expect(formes.questions.map((q) => q.id).toSet(), hasLength(5));
+      expect(
+        formes.questions.map((q) => q.id).toSet(),
+        hasLength(GeometricShape.values.length),
+      );
     });
 
     test('donne à chaque question un mot cible et une forme à dessiner', () {

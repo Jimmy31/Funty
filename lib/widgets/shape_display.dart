@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../models/geometric_shape.dart';
@@ -127,7 +129,36 @@ class _ShapePainter extends CustomPainter {
           ..lineTo(center.dx, center.dy + halfHeight)
           ..lineTo(center.dx - halfWidth, center.dy)
           ..close();
+
+      case GeometricShape.etoile:
+        // Étoile à 5 branches, une pointe vers le haut. Le creux est pris à
+        // 45 % de la pointe plutôt qu'aux ~38 % du pentagramme exact : des
+        // branches un peu plus épaisses, plus proches de l'étoile que
+        // l'enfant dessine et reconnaît.
+        return _starPath(center, outer: side * 0.46, inner: side * 0.46 * 0.45);
     }
+  }
+
+  /// Étoile régulière à 5 branches inscrite dans un cercle de rayon [outer],
+  /// première pointe vers le haut : les 10 sommets alternent entre le cercle
+  /// extérieur et le cercle des creux, de rayon [inner].
+  Path _starPath(Offset center, {required double outer, required double inner}) {
+    const points = 5;
+    final path = Path();
+    for (var i = 0; i < points * 2; i++) {
+      final radius = i.isEven ? outer : inner;
+      final angle = -pi / 2 + i * pi / points;
+      final vertex = Offset(
+        center.dx + radius * cos(angle),
+        center.dy + radius * sin(angle),
+      );
+      if (i == 0) {
+        path.moveTo(vertex.dx, vertex.dy);
+      } else {
+        path.lineTo(vertex.dx, vertex.dy);
+      }
+    }
+    return path..close();
   }
 
   @override

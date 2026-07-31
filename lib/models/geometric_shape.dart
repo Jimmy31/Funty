@@ -7,7 +7,8 @@ enum GeometricShape {
   carre(label: 'carré'),
   triangle(label: 'triangle'),
   rectangle(label: 'rectangle'),
-  losange(label: 'losange');
+  losange(label: 'losange'),
+  etoile(label: 'étoile');
 
   const GeometricShape({required this.label, this.spokenVariants = const []});
 
