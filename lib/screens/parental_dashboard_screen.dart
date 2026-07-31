@@ -88,6 +88,9 @@ class _ProfileSectionState extends State<_ProfileSection> {
   void initState() {
     super.initState();
     context.read<PerformanceStore>().ensureLoaded(widget.profile.id);
+    // Sans ça, la liste des exercices activés du profil serait vide jusqu'à
+    // ce qu'un autre écran ait chargé son activation.
+    context.read<CatalogStore>().ensureActivationLoaded(widget.profile.id);
   }
 
   Future<void> _edit(BuildContext context) async {
@@ -131,9 +134,16 @@ class _ProfileSectionState extends State<_ProfileSection> {
   @override
   Widget build(BuildContext context) {
     final catalogStore = context.watch<CatalogStore>();
-    final performances = context.watch<PerformanceStore>().forProfile(
-      widget.profile.id,
-    );
+    final performanceStore = context.watch<PerformanceStore>();
+
+    // Les exercices activés pour ce profil, dans l'ordre du catalogue — et
+    // non ceux déjà pratiqués. Lister les seconds donnait un résumé sans
+    // rapport avec la curation : un exercice tout juste activé n'y figurait
+    // pas, un exercice retiré y restait.
+    final actifs = catalogStore.activeIdsFor(widget.profile.id);
+    final exercices = catalogStore.exercises
+        .where((exercise) => actifs.contains(exercise.id))
+        .toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -144,12 +154,32 @@ class _ProfileSectionState extends State<_ProfileSection> {
           children: [
             Row(
               children: [
-                ProfileAvatar(avatarId: widget.profile.avatarId, radius: 20),
-                const SizedBox(width: 12),
+                // Prénom et avatar s'éditent par appui long sur eux-mêmes,
+                // dans le dialogue qui porte déjà les deux — plutôt qu'un
+                // bouton crayon séparé, qui n'indiquait pas non plus ce
+                // qu'il modifiait.
                 Expanded(
-                  child: Text(
-                    widget.profile.name,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onLongPress: () => _edit(context),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          ProfileAvatar(
+                            avatarId: widget.profile.avatarId,
+                            radius: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              widget.profile.name,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 IconButton(
@@ -159,11 +189,6 @@ class _ProfileSectionState extends State<_ProfileSection> {
                       context.push('/profiles/${widget.profile.id}/catalog'),
                 ),
                 IconButton(
-                  tooltip: 'Modifier le profil',
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: () => _edit(context),
-                ),
-                IconButton(
                   tooltip: 'Supprimer le profil',
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () => _delete(context),
@@ -171,20 +196,24 @@ class _ProfileSectionState extends State<_ProfileSection> {
               ],
             ),
             const Divider(),
-            if (performances.isEmpty)
+            if (exercices.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text('Aucune performance enregistrée pour l\'instant.'),
+                child: Text(
+                  'Aucun exercice activé pour l\'instant.\n'
+                  'Choisissez-en avec le bouton de curation ci-dessus.',
+                ),
               )
             else
-              // Une ligne par exercice pratiqué : son nom et sa moyenne de
-              // réussite, rien de plus (cf. PRD 6.6). Le détail question par
-              // question est à un tap de là.
-              for (final performance in performances)
+              // Une ligne par exercice activé : son nom et son temps de
+              // réponse moyen, rien de plus (cf. PRD 6.6). Le détail question
+              // par question est à un tap de là.
+              for (final exercise in exercices)
                 _ExerciseSummaryRow(
                   profileId: widget.profile.id,
-                  exerciseId: performance.exerciseId,
-                  exercise: catalogStore.byId(performance.exerciseId),
+                  exerciseId: exercise.id,
+                  exercise: exercise,
+                  revision: performanceStore.revision,
                 ),
           ],
         ),
@@ -193,24 +222,69 @@ class _ProfileSectionState extends State<_ProfileSection> {
   }
 }
 
-/// Une ligne du tableau de bord : nom de l'exercice et moyenne de ses
-/// pourcentages de réussite par question (cf. PRD 6.6). Mène au détail
-/// question par question.
-class _ExerciseSummaryRow extends StatelessWidget {
+/// Une ligne du tableau de bord : nom de l'exercice et son temps de réponse
+/// moyen (cf. PRD 6.6). Mène au détail question par question.
+///
+/// Avec état, et non un simple [FutureBuilder] construit à la volée : la
+/// requête doit être lancée une fois, pas à chaque reconstruction de l'écran.
+/// Relancée à chaque build, elle repassait par son état d'attente — affiché
+/// comme "N/A", faute de distinguer "pas encore chargé" de "jamais posée" —
+/// et une ligne pourtant renseignée pouvait rester bloquée dessus.
+class _ExerciseSummaryRow extends StatefulWidget {
   const _ExerciseSummaryRow({
     required this.profileId,
     required this.exerciseId,
     required this.exercise,
+    required this.revision,
   });
 
   final String profileId;
   final String exerciseId;
   final Exercise? exercise;
 
+  /// Révision de [PerformanceStore] : son changement est le signal qu'une
+  /// écriture a eu lieu (typiquement une remise à zéro) et que le temps
+  /// affiché doit être relu.
+  final int revision;
+
+  @override
+  State<_ExerciseSummaryRow> createState() => _ExerciseSummaryRowState();
+}
+
+class _ExerciseSummaryRowState extends State<_ExerciseSummaryRow> {
+  Future<Map<String, QuestionTiming>>? _timings;
+
+  @override
+  void initState() {
+    super.initState();
+    _timings = _load();
+  }
+
+  @override
+  void didUpdateWidget(_ExerciseSummaryRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.revision != widget.revision ||
+        oldWidget.exerciseId != widget.exerciseId ||
+        oldWidget.profileId != widget.profileId) {
+      setState(() => _timings = _load());
+    }
+  }
+
+  Future<Map<String, QuestionTiming>>? _load() {
+    final exercise = widget.exercise;
+    if (exercise == null || exercise.isSequentialException) return null;
+    return context.read<QuestionStatsRepository>().recentTimingByQuestion(
+      widget.profileId,
+      widget.exerciseId,
+      bronzeThreshold: exercise.bronzeThreshold,
+      sampleSize: questionStatsSampleSize,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final exercise = this.exercise;
-    final title = exercise?.title ?? exerciseId;
+    final exercise = widget.exercise;
+    final title = exercise?.title ?? widget.exerciseId;
 
     // Comptage n'a pas de granularité "question" (cf. PRD 6.2/6.5) : ni
     // moyenne par question, ni tableau de détail à afficher.
@@ -224,16 +298,10 @@ class _ExerciseSummaryRow extends StatelessWidget {
     }
 
     return FutureBuilder<Map<String, QuestionTiming>>(
-      future: context.read<QuestionStatsRepository>().recentTimingByQuestion(
-        profileId,
-        exerciseId,
-        bronzeThreshold: exercise.bronzeThreshold,
-        sampleSize: questionStatsSampleSize,
-      ),
+      future: _timings,
       builder: (context, snapshot) {
-        final average = snapshot.hasData
-            ? averageTiming(snapshot.data!.values)
-            : null;
+        final charge = snapshot.connectionState == ConnectionState.done;
+        final average = charge ? averageTiming(snapshot.data!.values) : null;
         return ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
@@ -244,15 +312,22 @@ class _ExerciseSummaryRow extends StatelessWidget {
               color: timingBackground(average, exercise),
               borderRadius: BorderRadius.circular(4),
             ),
+            // Tant que la lecture n'est pas finie, un tiret plutôt que "N/A" :
+            // "N/A" affirme que l'enfant n'a jamais répondu, ce qu'on ne sait
+            // pas encore.
             child: Text(
-              average == null ? 'N/A' : formatSeconds(average),
+              !charge
+                  ? '…'
+                  : (average == null ? 'N/A' : formatSeconds(average)),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: average == null ? Colors.grey : Colors.black87,
               ),
             ),
           ),
-          onTap: () => context.push('/parental/stats/$profileId/$exerciseId'),
+          onTap: () => context.push(
+            '/parental/stats/${widget.profileId}/${widget.exerciseId}',
+          ),
         );
       },
     );

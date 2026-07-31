@@ -8,6 +8,14 @@ class PerformanceStore extends ChangeNotifier {
 
   final PerformanceRepository _repository;
   final Map<String, List<ExercisePerformanceStub>> _cache = {};
+  int _revision = 0;
+
+  /// Incrémenté à chaque écriture. Les écrans qui lisent l'historique par
+  /// *question* (cf. [QuestionStatsRepository]) n'ont aucun autre moyen de
+  /// savoir qu'il a changé : ce dépôt-là n'est pas observable, et une remise à
+  /// zéro les laisserait afficher des chiffres périmés. Comparer la révision
+  /// leur dit quand relancer leur requête.
+  int get revision => _revision;
 
   List<ExercisePerformanceStub> forProfile(String profileId) =>
       _cache[profileId] ?? const [];
@@ -15,6 +23,7 @@ class PerformanceStore extends ChangeNotifier {
   Future<void> ensureLoaded(String profileId) async {
     if (_cache.containsKey(profileId)) return;
     _cache[profileId] = await _repository.getForProfile(profileId);
+    _revision++;
     notifyListeners();
   }
 
@@ -29,6 +38,7 @@ class PerformanceStore extends ChangeNotifier {
       badgeLevel: badgeLevel,
     );
     _cache[profileId] = await _repository.getForProfile(profileId);
+    _revision++;
     notifyListeners();
   }
 
@@ -37,6 +47,7 @@ class PerformanceStore extends ChangeNotifier {
   Future<void> reset(String profileId, String exerciseId) async {
     await _repository.reset(profileId, exerciseId);
     _cache[profileId] = await _repository.getForProfile(profileId);
+    _revision++;
     notifyListeners();
   }
 }
